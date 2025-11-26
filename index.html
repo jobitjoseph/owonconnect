@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OWON OEL8511 - Control Interface</title>
+    <title>OWONConnect</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
@@ -605,7 +605,7 @@
     <div class="header">
         <div class="logo">
             <div class="logo-icon">O</div>
-            <span>OWON OEL8511</span>
+            <span>OWONConnect</span>
         </div>
         <div class="header-controls">
             <button class="btn btn-secondary" onclick="showAbout()">ℹ️ About</button>
@@ -1276,8 +1276,8 @@
                             <label style="font-size: 10px; color: var(--text-secondary); margin-bottom: 6px; display: block;">DISPLAY</label>
                             <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Voltage</label>
                             <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Current</label>
-                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Capacity</label>
-                            <label class="checkbox-label"><input type="checkbox" onchange="updateChart()"> Power</label>
+                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Power</label>
+                            <label class="checkbox-label"><input type="checkbox" onchange="updateChart()"> Capacity</label>
                         </div>
                         <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px;">
                             <button class="btn btn-primary" style="width: 100%;" onclick="startBatteryTest()">▶️ Start Test</button>
@@ -2023,7 +2023,7 @@ async function measureAll() {
                     voltageData.push(voltage);
                     currentData.push(current);
                     powerData.push(power);
-                    capacityData.push(totalCapacity);
+                    capacityData.push(batteryTotalCapacity);
                     timeData.push(inputEnabled && startTime ? (Date.now() - startTime) / 1000 : 0);
 
                     // Trim buffers
@@ -2061,7 +2061,7 @@ async function measureAll() {
             document.getElementById('voltageReading').textContent = voltage.toFixed(3);
             document.getElementById('currentReading').textContent = current.toFixed(3);
             document.getElementById('powerReading').textContent = power.toFixed(2);
-            document.getElementById('capacityReading').textContent = totalCapacity.toFixed(1);
+            //document.getElementById('capacityReading').textContent = batteryTotalCapacity.toFixed(1);
             
             document.getElementById('voltageMin').textContent = stats.voltage.min === Infinity ? '0.00' : stats.voltage.min.toFixed(2);
             document.getElementById('voltageMax').textContent = stats.voltage.max === -Infinity ? '0.00' : stats.voltage.max.toFixed(2);
@@ -3232,7 +3232,8 @@ async function measureAll() {
             // Calculate capacity (mAh)
             const deltaTime = updateRate / 3600000; // Convert ms to hours
             batteryTotalCapacity += current * deltaTime * 1000; // Convert to mAh
-            document.getElementById('batteryDischarged').textContent = batteryTotalCapacity.toFixed(0) + ' mAh';
+            document.getElementById('batteryDischarged').textContent = batteryTotalCapacity.toFixed(1) + ' mAh';
+            document.getElementById('capacityReading').textContent = batteryTotalCapacity.toFixed(1);
             
             // Calculate energy (Wh)
             const energy = (batteryTotalCapacity * voltage) / 1000;
