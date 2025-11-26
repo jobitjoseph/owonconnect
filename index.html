@@ -1930,9 +1930,9 @@ async function measureAll() {
 
                     // Update capacity
                     if (inputEnabled && startTime) {
-                        totalCapacity += (current * updateRate / 1000) / 3600;
-                        const elapsed = (Date.now() - startTime) / 1000;
-                        energy += (power * updateRate / 1000) / 3600;
+                        const capacityIncrement = (current * dt) / 3.6;
+                        totalCapacity += capacityIncrement;
+                        energy += (power * dt) / 3600;
                     }
 
                     // Add to buffers
