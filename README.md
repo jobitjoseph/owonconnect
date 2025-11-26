@@ -13,6 +13,8 @@ A modern, web-based control interface for the OWON OEL8511 Electronic Load using
 </p>
 
 
+![Main Image](https://github.com/jobitjoseph/owonconnect/blob/58137c9c6cb41ecd6bdcdb358903a67bae87b2e0/owonconnect.png)
+
 ## ✨ Features
 
 ### 🎮 **Multiple Operating Modes**
