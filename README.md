@@ -1,5 +1,5 @@
 # OWON OEL8511 Web Control Interface
-
+# Work in progress. Do not use, unless for mevaluation of bug fix.
 A modern, web-based control interface for the OWON OEL8511 Electronic Load using the Web Serial API. Control your electronic load directly from your browser with real-time monitoring, data logging, and battery testing capabilities.
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
