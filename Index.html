@@ -1,0 +1,3111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OWON Connect</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1E88E5;
+            --primary-dark: #1565C0;
+            --secondary: #26A69A;
+            --background: #212121;
+            --surface: #2C2C2C;
+            --surface-light: #3C3C3C;
+            --text-primary: #FFFFFF;
+            --text-secondary: #B0B0B0;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --error: #F44336;
+            --border: #444444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.light-theme {
+            --primary: #1976D2;
+            --secondary: #00897B;
+            --background: #FAFAFA;
+            --surface: #FFFFFF;
+            --surface-light: #F5F5F5;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --border: #E0E0E0;
+        }
+
+        /* Header */
+        .header {
+            background: var(--surface);
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-error {
+            background: var(--error);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--surface-light);
+            color: var(--text-primary);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Main Layout */
+        .container {
+            display: grid;
+            grid-template-columns: 150px 1fr 270px;
+            gap: 12px;
+            padding: 12px;
+            height: calc(100vh - 95px);
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            font-size: 11px;
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .mode-btn {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0;
+            border: none;
+            border-radius: 6px;
+            background: var(--surface-light);
+            color: var(--text-primary);
+            font-size: 11px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .mode-btn:hover {
+            background: var(--primary);
+            transform: translateX(2px);
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+        }
+
+        .submode-btn {
+            padding: 8px 14px;
+            margin: 4px 0 4px 20px;
+            font-size: 11px;
+            font-weight: 600;
+            background: var(--surface-light);
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submode-btn:hover {
+            background: var(--surface);
+            border-color: var(--primary);
+            transform: translateX(4px);
+        }
+
+        .submode-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-color: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(30, 136, 229, 0.4);
+            transform: translateX(4px);
+        }
+
+        .submode-btn.active::before {
+            content: '▶';
+            position: absolute;
+            left: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 8px;
+            color: var(--primary);
+        }
+
+        /* Content Area */
+        .content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .mode-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mode-title {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Card Layout */
+        .card-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .card {
+            background: var(--surface);
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        /* Dial Container */
+        .dial-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 10px;
+        }
+
+        .dial {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary) 0deg, var(--surface-light) 0deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .dial::before {
+            content: '';
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--background);
+            position: absolute;
+        }
+
+        .dial-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        /* Control Grid */
+        .control-grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .control-group {
+            margin-bottom: 8px;
+        }
+
+        .control-group label {
+            font-size: 9px;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .control-group input[type="number"],
+        .control-group select {
+            width: 60%;
+            padding: 4px 6px;
+            font-size: 11px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--surface-light);
+            color: var(--text-primary);
+        }
+
+        .control-group select {
+            width: 100%;
+        }
+
+        .unit {
+            font-size: 9px;
+            color: var(--text-secondary);
+            margin-left: 4px;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 45px;
+            height: 22px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: 0.3s;
+            border-radius: 22px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .slider {
+            background-color: var(--success);
+        }
+
+        .toggle-switch input:checked + .slider:before {
+            transform: translateX(23px);
+        }
+
+        /* Radio Group */
+        .radio-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        .radio-btn {
+            padding: 5px 8px;
+            font-size: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--surface-light);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
+            flex: 1;
+        }
+
+        .radio-btn:hover {
+            background: var(--primary);
+        }
+
+        .radio-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Right Panel */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        /* Live Readings */
+        .readings-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .readings-grid-2x2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .stat-display {
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .reading-card {
+            background: var(--background);
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .reading-value {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 6px 0;
+        }
+
+        .reading-value.voltage { color: #2196F3; }
+        .reading-value.current { color: #4CAF50; }
+        .reading-value.power { color: #FF5722; }
+        .reading-value.capacity { color: #9C27B0; }
+
+        .reading-label {
+            font-size: 9px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .reading-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            font-size: 8px;
+            color: var(--text-secondary);
+        }
+
+        /* Graph */
+        .graph-card {
+            min-height: 350px;
+        }
+
+        .graph-canvas {
+            width: 100% !important;
+            height: 300px !important;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: var(--surface);
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--error);
+        }
+
+        .status-indicator.connected {
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Checkbox */
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            margin: 6px 0;
+            cursor: pointer;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            padding: 24px;
+            border-radius: 12px;
+            max-width: 450px;
+            width: 90%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--surface-light);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        .mode-panel {
+            display: none;
+        }
+
+        .mode-panel.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">O</div>
+            <span>OWON CONNECT</span>
+        </div>
+        <div class="header-controls">
+            <button class="btn btn-secondary" onclick="showAbout()">ℹ️ About</button>
+            <button class="btn btn-primary" id="connectBtn" onclick="toggleConnection()">🔌 Connect</button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h3>MODE</h3>
+            <button class="mode-btn active" id="loadBtn" onclick="selectMode('load')">⚡ Load</button>
+            <div id="submodes">
+                <button class="submode-btn active" onclick="selectSubmode('CC')">CC</button>
+                <button class="submode-btn" onclick="selectSubmode('CV')">CV</button>
+                <button class="submode-btn" onclick="selectSubmode('CR')">CR</button>
+                <button class="submode-btn" onclick="selectSubmode('CP')">CP</button>
+                <button class="submode-btn" onclick="selectSubmode('DYNAMIC')">Dynamic</button>
+            </div>
+            <button class="mode-btn" id="batteryBtn" onclick="selectMode('battery')">🔋 Battery</button>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- CC Mode Panel -->
+            <div id="ccPanel" class="mode-panel active">
+                <div class="mode-header">
+                    <h3 class="mode-title">⚡ CONSTANT CURRENT (CC)</h3>
+                    <button class="btn btn-success" id="inputBtn" onclick="toggleInput()" disabled>🟢 INPUT ON</button>
+                </div>
+
+                <div class="card-row">
+                    <!-- Set Current Card -->
+                    <div class="card">
+                        <div class="card-header">SET CURRENT</div>
+                        <div class="dial-container">
+                            <div class="dial" id="ccDial">
+                                <div class="dial-bg"></div>
+                            </div>
+                            <div class="dial-value" id="ccDisplay">-- A</div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <input type="number" id="ccInput" step="0.001" style="width: 100%; padding: 8px; font-size: 14px; text-align: center; background: var(--surface-light); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);" onchange="updateSetValue('CC')">
+                        </div>
+                    </div>
+
+                    <!-- Settings Card -->
+                    <div class="card">
+                        <div class="card-header">SETTINGS</div>
+                        <div class="control-grid-2col">
+                            <div class="control-group">
+                                <label>Current Range</label>
+                                <select id="ccRange" onchange="updateCCRange()">
+                                    <option value="AUTO">Auto</option>
+                                    <option value="LOW">Low (0-2A)</option>
+                                    <option value="HIGH">High (2-20A)</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Slew Rate</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="ccSlew" step="0.001" style="width: 60%;" onchange="updateCCSlew()">
+                                    <span class="unit">A/μs</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Current Limit</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="ccLimit" step="0.001" style="width: 60%;" onchange="updateCCLimit()">
+                                    <span class="unit">A</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Voltage On Level</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="ccVon" step="0.001" style="width: 60%;" onchange="updateCCVon()">
+                                    <span class="unit">V</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Short Circuit</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ccShort" onchange="updateShortCircuit()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label>Remote Sensing</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ccRemote" onchange="updateRemoteSensing()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label>OVP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" id="ccOvpEn" checked onchange="updateOVP()">
+                                    <input type="number" id="ccOvp" step="0.1" style="width: 60%;" onchange="updateOVP()">
+                                    <span class="unit">V</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>OCP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" id="ccOcpEn" checked onchange="updateOCP()">
+                                    <input type="number" id="ccOcp" step="0.1" style="width: 60%;" onchange="updateOCP()">
+                                    <span class="unit">A</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>OPP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" id="ccOppEn" checked onchange="updateOPP()">
+                                    <input type="number" id="ccOpp" step="1" style="width: 60%;" onchange="updateOPP()">
+                                    <span class="unit">W</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Slew Rate Mode</label>
+                                <div class="radio-group" id="ccSlewMode">
+                                    <div class="radio-btn active" onclick="selectRadio(this, 'ccSlewMode')">Rise</div>
+                                    <div class="radio-btn" onclick="selectRadio(this, 'ccSlewMode')">Fall</div>
+                                    <div class="radio-btn" onclick="selectRadio(this, 'ccSlewMode')">Both</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Graph Settings Card -->
+                    <div class="card">
+                        <div class="card-header">GRAPH</div>
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-size: 10px; color: var(--text-secondary); margin-bottom: 6px; display: block;">VIEW MODE</label>
+                            <select style="width: 100%; padding: 4px 6px; font-size: 11px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-light); color: var(--text-primary);">
+                                <option>Consolidated</option>
+                                <option>Separate (2x2)</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-size: 10px; color: var(--text-secondary); margin-bottom: 6px; display: block;">DISPLAY</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" checked onchange="updateChart()"> Voltage
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" checked onchange="updateChart()"> Current
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" checked onchange="updateChart()"> Power
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" onchange="updateChart()"> Capacity
+                            </label>
+                        </div>
+                        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px;">
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="saveSnapshot()">📸 Snapshot</button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="saveData()">💾 Save Data</button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="clearData()">🗑️ Clear</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graph Display Card -->
+                <div class="card graph-card" style="margin-top: 12px;">
+                    <div class="card-header">📈 REAL-TIME GRAPH</div>
+                    <canvas id="chart" class="graph-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- CV Mode Panel -->
+            <div id="cvPanel" class="mode-panel">
+                <div class="mode-header">
+                    <h3 class="mode-title">⚡ CONSTANT VOLTAGE (CV)</h3>
+                    <button class="btn btn-success inputBtn" onclick="toggleInput()" disabled>🟢 INPUT ON</button>
+                </div>
+
+                <div class="card-row">
+                    <div class="card">
+                        <div class="card-header">SET VOLTAGE</div>
+                        <div class="dial-container">
+                            <div class="dial" id="cvDial"></div>
+                            <div class="dial-value" id="cvDisplay">-- V</div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <input type="number" id="cvInput" step="0.001" style="width: 100%; padding: 8px; font-size: 14px; text-align: center; background: var(--surface-light); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);" onchange="updateSetValue('CV')">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">SETTINGS</div>
+                        <div class="control-grid-2col">
+                            <div class="control-group">
+                                <label>Voltage Range</label>
+                                <select id="cvRange">
+                                    <option value="AUTO">Auto</option>
+                                    <option value="LOW">Low (0-30V)</option>
+                                    <option value="HIGH">High (30-150V)</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Voltage On</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="cvVon" step="0.001" style="width: 60%;">
+                                    <span class="unit">V</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Current Limit</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="cvLimit" step="0.001" style="width: 60%;">
+                                    <span class="unit">A</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Slew Rate</label>
+                                <div class="radio-group">
+                                    <div class="radio-btn" onclick="selectRadio(this)">Fast</div>
+                                    <div class="radio-btn active" onclick="selectRadio(this)">Normal</div>
+                                    <div class="radio-btn" onclick="selectRadio(this)">Slow</div>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Remote Sensing</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="cvRemote" onchange="updateRemoteSensing()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="control-group"></div>
+                            <div class="control-group">
+                                <label>OVP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" checked>
+                                    <input type="number" value="150" step="0.1" style="width: 60%;">
+                                    <span class="unit">V</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>OCP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" checked>
+                                    <input type="number" value="20" step="0.1" style="width: 60%;">
+                                    <span class="unit">A</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>OPP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" checked>
+                                    <input type="number" value="200" step="1" style="width: 60%;">
+                                    <span class="unit">W</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">GRAPH</div>
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-size: 10px; color: var(--text-secondary); margin-bottom: 6px; display: block;">DISPLAY</label>
+                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Voltage</label>
+                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Current</label>
+                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Power</label>
+                        </div>
+                        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px;">
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="saveSnapshot()">📸 Snapshot</button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="saveData()">💾 Save Data</button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="clearData()">🗑️ Clear</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card graph-card" style="margin-top: 12px;">
+                    <div class="card-header">📈 REAL-TIME GRAPH</div>
+                    <canvas id="cvChart" class="graph-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- CR Mode Panel -->
+            <div id="crPanel" class="mode-panel">
+                <div class="mode-header">
+                    <h3 class="mode-title">⚡ CONSTANT RESISTANCE (CR)</h3>
+                    <button class="btn btn-success inputBtn" onclick="toggleInput()" disabled>🟢 INPUT ON</button>
+                </div>
+
+                <div class="card-row">
+                    <div class="card">
+                        <div class="card-header">SET RESISTANCE</div>
+                        <div class="dial-container">
+                            <div class="dial" id="crDial"></div>
+                            <div class="dial-value" id="crDisplay">-- Ω</div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <input type="number" id="crInput" step="0.001" style="width: 100%; padding: 8px; font-size: 14px; text-align: center; background: var(--surface-light); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);" onchange="updateSetValue('CR')">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">SETTINGS</div>
+                        <div class="control-grid-2col">
+                            <div class="control-group">
+                                <label>Current Limit</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="crCurrentLimit" step="0.001" style="width: 60%;">
+                                    <span class="unit">A</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Power Limit</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="crPowerLimit" step="1" style="width: 60%;">
+                                    <span class="unit">W</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Slew Rate Rise</label>
+                                <div class="radio-group">
+                                    <div class="radio-btn" onclick="selectRadio(this)">Fast</div>
+                                    <div class="radio-btn active" onclick="selectRadio(this)">Normal</div>
+                                    <div class="radio-btn" onclick="selectRadio(this)">Slow</div>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Slew Rate Fall</label>
+                                <div class="radio-group">
+                                    <div class="radio-btn" onclick="selectRadio(this)">Fast</div>
+                                    <div class="radio-btn active" onclick="selectRadio(this)">Normal</div>
+                                    <div class="radio-btn" onclick="selectRadio(this)">Slow</div>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>OVP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" checked>
+                                    <input type="number" value="150" step="0.1" style="width: 60%;">
+                                    <span class="unit">V</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>OCP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" checked>
+                                    <input type="number" value="20" step="0.1" style="width: 60%;">
+                                    <span class="unit">A</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>OPP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" checked>
+                                    <input type="number" value="200" step="1" style="width: 60%;">
+                                    <span class="unit">W</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">GRAPH</div>
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-size: 10px; color: var(--text-secondary); margin-bottom: 6px; display: block;">DISPLAY</label>
+                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Voltage</label>
+                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Current</label>
+                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Power</label>
+                        </div>
+                        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px;">
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="saveSnapshot()">📸 Snapshot</button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="saveData()">💾 Save Data</button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="clearData()">🗑️ Clear</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card graph-card" style="margin-top: 12px;">
+                    <div class="card-header">📈 REAL-TIME GRAPH</div>
+                    <canvas id="crChart" class="graph-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- CP Mode Panel -->
+            <div id="cpPanel" class="mode-panel">
+                <div class="mode-header">
+                    <h3 class="mode-title">⚡ CONSTANT POWER (CP)</h3>
+                    <button class="btn btn-success inputBtn" onclick="toggleInput()" disabled>🟢 INPUT ON</button>
+                </div>
+
+                <div class="card-row">
+                    <div class="card">
+                        <div class="card-header">SET POWER</div>
+                        <div class="dial-container">
+                            <div class="dial" id="cpDial"></div>
+                            <div class="dial-value" id="cpDisplay">-- W</div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <input type="number" id="cpInput" step="0.01" style="width: 100%; padding: 8px; font-size: 14px; text-align: center; background: var(--surface-light); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);" onchange="updateSetValue('CP')">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">SETTINGS</div>
+                        <div class="control-grid-2col">
+                            <div class="control-group">
+                                <label>Voltage Limit</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="cpVoltageLimit" step="0.1" style="width: 60%;">
+                                    <span class="unit">V</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Current Limit</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="cpCurrentLimit" step="0.001" style="width: 60%;">
+                                    <span class="unit">A</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Slew Rate</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="cpSlewRate" step="0.001" style="width: 60%;">
+                                    <span class="unit">W/μs</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Slew Rate Rise</label>
+                                <div class="radio-group">
+                                    <div class="radio-btn" onclick="selectRadio(this)">Fast</div>
+                                    <div class="radio-btn active" onclick="selectRadio(this)">Normal</div>
+                                    <div class="radio-btn" onclick="selectRadio(this)">Slow</div>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Slew Rate Fall</label>
+                                <div class="radio-group">
+                                    <div class="radio-btn" onclick="selectRadio(this)">Fast</div>
+                                    <div class="radio-btn active" onclick="selectRadio(this)">Normal</div>
+                                    <div class="radio-btn" onclick="selectRadio(this)">Slow</div>
+                                </div>
+                            </div>
+                            <div class="control-group"></div>
+                            <div class="control-group">
+                                <label>OVP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" checked>
+                                    <input type="number" value="150" step="0.1" style="width: 60%;">
+                                    <span class="unit">V</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>OCP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" checked>
+                                    <input type="number" value="20" step="0.1" style="width: 60%;">
+                                    <span class="unit">A</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>OPP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" checked>
+                                    <input type="number" value="200" step="1" style="width: 60%;">
+                                    <span class="unit">W</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">GRAPH</div>
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-size: 10px; color: var(--text-secondary); margin-bottom: 6px; display: block;">DISPLAY</label>
+                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Voltage</label>
+                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Current</label>
+                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Power</label>
+                        </div>
+                        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px;">
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="saveSnapshot()">📸 Snapshot</button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="saveData()">💾 Save Data</button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="clearData()">🗑️ Clear</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card graph-card" style="margin-top: 12px;">
+                    <div class="card-header">📈 REAL-TIME GRAPH</div>
+                    <canvas id="cpChart" class="graph-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Dynamic Mode Panel - Placeholder -->
+            <div id="dynamicPanel" class="mode-panel">
+                <div class="mode-header">
+                    <h3 class="mode-title">⚡ DYNAMIC MODE</h3>
+                    <button class="btn btn-success inputBtn" onclick="toggleInput()" disabled>🟢 INPUT ON</button>
+                </div>
+                <div class="card">
+                    <div class="card-header">DYNAMIC MODE</div>
+                    <p style="padding: 20px; text-align: center; color: var(--text-secondary);">Dynamic mode panel - Coming soon</p>
+                </div>
+            </div>
+
+            <!-- Battery Test Panel -->
+            <div id="batteryPanel" class="mode-panel">
+                <div class="mode-header">
+                    <h3 class="mode-title">🔋 BATTERY TEST</h3>
+                    <button class="btn btn-success inputBtn" onclick="toggleInput()" disabled>🟢 INPUT ON</button>
+                </div>
+
+                <div class="card-row">
+                    <!-- Battery Configuration Card -->
+                    <div class="card">
+                        <div class="card-header">BATTERY CONFIGURATION</div>
+                        <div class="control-grid-2col">
+                            <div class="control-group">
+                                <label>Battery Type</label>
+                                <select id="batteryType">
+                                    <option value="LIION">Li-ion (3.0-4.2V)</option>
+                                    <option value="LIPO">LiPo (3.0-4.2V)</option>
+                                    <option value="LIFEPO4">LiFePO4 (2.5-3.65V)</option>
+                                    <option value="NIMH">NiMH (0.9-1.5V)</option>
+                                    <option value="NICD">NiCd (0.9-1.5V)</option>
+                                    <option value="LEAD">Lead Acid (1.75-2.4V)</option>
+                                    <option value="CUSTOM">Custom</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Cell Count</label>
+                                <input type="number" id="batteryCells" value="1" min="1" max="20" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label>Rated Capacity (mAh)</label>
+                                <input type="number" id="batteryCapacity" value="2000" step="100">
+                            </div>
+                            <div class="control-group">
+                                <label>Discharge Current (A)</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="batteryDischargeCurrent" step="0.001" style="width: 70%;" onchange="updateBatteryDischargeCurrent()">
+                                    <span class="unit">A</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Cut-off Voltage (V)</label>
+                                <input type="number" id="batteryCutoff" value="3.0" step="0.1">
+                            </div>
+                            <div class="control-group">
+                                <label>Auto Stop on Cutoff</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="batteryAutoStop" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div style="margin-top: 12px; padding: 10px; background: rgba(30, 136, 229, 0.1); border-left: 3px solid var(--primary); border-radius: 4px;">
+                            <div style="font-size: 10px; color: var(--text-secondary); margin-bottom: 4px;">💡 NOTE</div>
+                            <div style="font-size: 11px; color: var(--text-primary);">Set discharge current here or adjust in CC mode. Current changes are immediately sent to device.</div>
+                        </div>
+                    </div>
+
+                    <!-- Battery Status Card -->
+                    <div class="card">
+                        <div class="card-header">BATTERY STATUS</div>
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div class="stat-display" style="background: linear-gradient(135deg, #2196F3, #1976D2); padding: 12px; border-radius: 8px;">
+                                <div style="font-size: 10px; color: rgba(255,255,255,0.8);">STATE OF CHARGE</div>
+                                <div style="font-size: 24px; font-weight: bold; color: #fff;" id="batterySOC">100%</div>
+                                <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; margin-top: 8px; overflow: hidden;">
+                                    <div id="batterySOCBar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #4CAF50, #8BC34A); transition: width 0.3s;"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="readings-grid-2x2">
+                                <div class="stat-display" style="background: linear-gradient(135deg, #2196F3, #1976D2);">
+                                    <div style="font-size: 10px; color: rgba(255,255,255,0.8);">VOLTAGE</div>
+                                    <div style="font-size: 18px; font-weight: bold; color: #fff;" id="batteryVoltage">-- V</div>
+                                </div>
+                                <div class="stat-display" style="background: linear-gradient(135deg, #4CAF50, #388E3C);">
+                                    <div style="font-size: 10px; color: rgba(255,255,255,0.8);">CURRENT</div>
+                                    <div style="font-size: 18px; font-weight: bold; color: #fff;" id="batteryCurrent">-- A</div>
+                                </div>
+                                <div class="stat-display" style="background: linear-gradient(135deg, #9C27B0, #7B1FA2);">
+                                    <div style="font-size: 10px; color: rgba(255,255,255,0.8);">DISCHARGED</div>
+                                    <div style="font-size: 18px; font-weight: bold; color: #fff;" id="batteryDischarged">0 mAh</div>
+                                </div>
+                                <div class="stat-display" style="background: linear-gradient(135deg, #FF9800, #F57C00);">
+                                    <div style="font-size: 10px; color: rgba(255,255,255,0.8);">TIME</div>
+                                    <div style="font-size: 18px; font-weight: bold; color: #fff;" id="batteryTime">00:00:00</div>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px;">
+                                <div style="padding: 8px; background: var(--surface-light); border-radius: 6px;">
+                                    <div style="font-size: 9px; color: var(--text-secondary);">ENERGY</div>
+                                    <div style="font-size: 14px; font-weight: bold; color: var(--text-primary);" id="batteryEnergy">0 Wh</div>
+                                </div>
+                                <div style="padding: 8px; background: var(--surface-light); border-radius: 6px;">
+                                    <div style="font-size: 9px; color: var(--text-secondary);">AVG VOLTAGE</div>
+                                    <div style="font-size: 14px; font-weight: bold; color: var(--text-primary);" id="batteryAvgVolt">-- V</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Graph Settings Card -->
+                    <div class="card">
+                        <div class="card-header">GRAPH</div>
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-size: 10px; color: var(--text-secondary); margin-bottom: 6px; display: block;">DISPLAY</label>
+                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Voltage</label>
+                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Current</label>
+                            <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> Capacity</label>
+                            <label class="checkbox-label"><input type="checkbox" onchange="updateChart()"> Power</label>
+                        </div>
+                        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px;">
+                            <button class="btn btn-primary" style="width: 100%;" onclick="startBatteryTest()">▶️ Start Test</button>
+                            <button class="btn btn-error" style="width: 100%;" onclick="stopBatteryTest()">⏹️ Stop Test</button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="saveData()">💾 Save Data</button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="clearData()">🗑️ Clear</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graph Display Card -->
+                <div class="card graph-card" style="margin-top: 12px;">
+                    <div class="card-header">📈 BATTERY DISCHARGE CURVE</div>
+                    <canvas id="batteryChart" class="graph-canvas"></canvas>
+                </div>
+            </div>
+
+            <div id="ccPanel" class="mode-panel active">
+                <div class="mode-header">
+                    <h3 class="mode-title">⚡ CONSTANT CURRENT (CC)</h3>
+                    <button class="btn btn-success" id="inputBtn" onclick="toggleInput()" disabled>🟢 INPUT ON</button>
+                </div>
+
+                <div class="card-row">
+                    <!-- Set Current Card -->
+                    <div class="card">
+                        <div class="card-header">SET CURRENT</div>
+                        <div class="dial-container">
+                            <div class="dial" id="ccDial">
+                                <div class="dial-bg"></div>
+                            </div>
+                            <div class="dial-value" id="ccDisplay">-- A</div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <input type="number" id="ccInput" step="0.001" style="width: 100%; padding: 8px; font-size: 14px; text-align: center; background: var(--surface-light); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);" onchange="updateSetValue('CC')">
+                        </div>
+                    </div>
+
+                    <!-- Settings Card -->
+                    <div class="card">
+                        <div class="card-header">SETTINGS</div>
+                        <div class="control-grid-2col">
+                            <div class="control-group">
+                                <label>Current Range</label>
+                                <select id="ccRange" onchange="updateCCRange()">
+                                    <option value="AUTO">Auto</option>
+                                    <option value="LOW">Low (0-2A)</option>
+                                    <option value="HIGH">High (2-20A)</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label>Slew Rate</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="ccSlew" step="0.001" style="width: 60%;" onchange="updateCCSlew()">
+                                    <span class="unit">A/μs</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Current Limit</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="ccLimit" step="0.001" style="width: 60%;" onchange="updateCCLimit()">
+                                    <span class="unit">A</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Voltage On Level</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="ccVon" step="0.001" style="width: 60%;" onchange="updateCCVon()">
+                                    <span class="unit">V</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Short Circuit</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ccShort" onchange="updateShortCircuit()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label>Remote Sensing</label>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="ccRemote" onchange="updateRemoteSensing()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label>OVP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" id="ccOvpEn" checked onchange="updateOVP()">
+                                    <input type="number" id="ccOvp" step="0.1" style="width: 60%;" onchange="updateOVP()">
+                                    <span class="unit">V</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>OCP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" id="ccOcpEn" checked onchange="updateOCP()">
+                                    <input type="number" id="ccOcp" step="0.1" style="width: 60%;" onchange="updateOCP()">
+                                    <span class="unit">A</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>OPP</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" id="ccOppEn" checked onchange="updateOPP()">
+                                    <input type="number" id="ccOpp" step="1" style="width: 60%;" onchange="updateOPP()">
+                                    <span class="unit">W</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>Slew Rate Mode</label>
+                                <div class="radio-group" id="ccSlewMode">
+                                    <div class="radio-btn active" onclick="selectRadio(this, 'ccSlewMode')">Rise</div>
+                                    <div class="radio-btn" onclick="selectRadio(this, 'ccSlewMode')">Fall</div>
+                                    <div class="radio-btn" onclick="selectRadio(this, 'ccSlewMode')">Both</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Graph Settings Card -->
+                    <div class="card">
+                        <div class="card-header">GRAPH</div>
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-size: 10px; color: var(--text-secondary); margin-bottom: 6px; display: block;">VIEW MODE</label>
+                            <select style="width: 100%; padding: 4px 6px; font-size: 11px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-light); color: var(--text-primary);">
+                                <option>Consolidated</option>
+                                <option>Separate (2x2)</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-size: 10px; color: var(--text-secondary); margin-bottom: 6px; display: block;">DISPLAY</label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" checked onchange="updateChart()"> Voltage
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" checked onchange="updateChart()"> Current
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" checked onchange="updateChart()"> Power
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" onchange="updateChart()"> Capacity
+                            </label>
+                        </div>
+                        <div style="margin-top: auto; display: flex; flex-direction: column; gap: 8px;">
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="saveSnapshot()">📸 Snapshot</button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="saveData()">💾 Save Data</button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="clearData()">🗑️ Clear</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graph Display Card -->
+                <div class="card graph-card" style="margin-top: 12px;">
+                    <div class="card-header">📈 REAL-TIME GRAPH</div>
+                    <canvas id="chart" class="graph-canvas"></canvas>
+                </div>
+            </div>
+
+            <!-- Other mode panels (CV, CR, CP, etc.) will be similar -->
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+            <!-- Live Readings -->
+            <div class="card">
+                <div class="card-header">📊 LIVE READINGS</div>
+                <div class="readings-grid">
+                    <div class="reading-card">
+                        <div class="reading-label">VOLTAGE</div>
+                        <div class="reading-value voltage" id="voltageReading">0.000</div>
+                        <div class="reading-stats">
+                            <span>Min: <span id="voltageMin">0.00</span></span>
+                            <span>Max: <span id="voltageMax">0.00</span></span>
+                        </div>
+                    </div>
+                    <div class="reading-card">
+                        <div class="reading-label">CURRENT</div>
+                        <div class="reading-value current" id="currentReading">0.000</div>
+                        <div class="reading-stats">
+                            <span>Min: <span id="currentMin">0.00</span></span>
+                            <span>Max: <span id="currentMax">0.00</span></span>
+                        </div>
+                    </div>
+                    <div class="reading-card">
+                        <div class="reading-label">POWER</div>
+                        <div class="reading-value power" id="powerReading">0.00</div>
+                        <div class="reading-stats">
+                            <span>Min: <span id="powerMin">0.00</span></span>
+                            <span>Max: <span id="powerMax">0.00</span></span>
+                        </div>
+                    </div>
+                    <div class="reading-card">
+                        <div class="reading-label">CAPACITY</div>
+                        <div class="reading-value capacity" id="capacityReading">0.0</div>
+                        <div class="reading-stats">
+                            <span>mAh</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 8px; border-top: 1px solid var(--border); margin-top: 8px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 9px; margin: 4px 0;">
+                        <span>Energy:</span>
+                        <span id="energyReading">0.000 Wh</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 9px; margin: 4px 0;">
+                        <span>Duration:</span>
+                        <span id="durationReading">00:00:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="card">
+                <div class="card-header">⚙️ SETTINGS</div>
+                <div class="control-group">
+                    <label>Update Rate (ms):</label>
+                    <input type="number" id="updateRate" value="500" min="100" max="5000" style="width: 100%; padding: 4px 6px; font-size: 11px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-light); color: var(--text-primary);">
+                </div>
+                <div class="control-group">
+                    <label>Buffer Size:</label>
+                    <input type="number" id="bufferSize" value="1000" min="100" max="10000" style="width: 100%; padding: 4px 6px; font-size: 11px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-light); color: var(--text-primary);">
+                </div>
+                <button class="btn btn-primary" style="width: 100%; margin-top: 8px;" onclick="applySettings()">Apply Settings</button>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">⚡ QUICK ACTIONS</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button class="btn btn-secondary" onclick="console.log('Log')">📋 Log</button>
+                    <button class="btn btn-secondary" onclick="saveData()">📊 Export</button>
+                    <button class="btn btn-secondary" onclick="resetDevice()">🔄 Reset</button>
+                    <button class="btn btn-secondary" onclick="clearData()">🗑️ Clear</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">
+            <div class="status-indicator" id="connIndicator"></div>
+            <span id="connStatus">Disconnected</span>
+        </div>
+        <div class="status-item">
+            <span id="modeStatus">CC Mode</span>
+        </div>
+        <div class="status-item">
+            <span id="inputStatus">Input: OFF</span>
+        </div>
+        <div class="status-item">
+            <span id="clock">00:00:00</span>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div class="modal" id="aboutModal">
+        <div class="modal-content">
+            <div class="modal-header">ℹ️ About OWON Connect</div>
+            <div style="text-align:center; margin: 16px 0;">
+                <span class="version-badge">Version 1.0.0</span>
+            </div>
+            <p style="text-align:center; margin: 12px 0; font-size: 13px; line-height: 1.6;">
+                <strong>Developer:</strong> Jobit Joseph<br>
+                <strong>GitHub:</strong> <a href="https://github.com/jobitjoseph/" target="_blank" style="color: var(--primary);">github.com/jobitjoseph</a>
+            </p>
+            <p style="text-align:center;margin: 12px 0; font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
+                Modern web-based control interface for OWON OEL85xx Electronic Load with support for CC/CV/CR/CP/Dynamic modes and battery testing.
+            </p>
+            <div style="text-align:center; margin: 16px 0;">
+                <strong>Support Development:</strong><br>
+                <a href="https://www.paypal.com/paypalme/jobitjoseph" target="_blank" class="btn btn-primary" style="margin-top: 8px; text-decoration: none;">💝 Donate via PayPal</a>
+            </div>
+            <button class="btn btn-secondary" style="margin-top: 16px; display:block; margin-left:auto; margin-right:auto; margin-top: 16px;" onclick="closeAbout()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Global State
+        let port = null;
+        let reader = null;
+        let writer = null;
+        let connected = false;
+        let monitoring = false;
+        let monitorInterval = null;
+        let startTime = null;
+        let currentMode = 'CC';
+        let inputEnabled = false;
+
+        // Data buffers
+        let updateRate = 500;
+        let bufferSize = 1000;
+        let voltageData = [];
+        let currentData = [];
+        let powerData = [];
+        let capacityData = [];
+        let timeData = [];
+        let totalCapacity = 0;
+        let energy = 0;
+
+        // Statistics
+        let stats = {
+            voltage: { min: Infinity, max: -Infinity },
+            current: { min: Infinity, max: -Infinity },
+            power: { min: Infinity, max: -Infinity }
+        };
+
+        // Chart
+        let chart = null;
+        let cvChart = null;
+        let crChart = null;
+        let cpChart = null;
+        let batteryChart = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            updateClock();
+            setInterval(updateClock, 1000);
+        });
+
+        // Web Serial API Functions
+        async function toggleConnection() {
+            if (!connected) {
+                await connect();
+            } else {
+                await disconnect();
+            }
+        }
+
+        async function connect() {
+            if (!('serial' in navigator)) {
+                alert('Web Serial API not supported. Please use Chrome, Edge, or Opera browser.');
+                return;
+            }
+
+            try {
+                port = await navigator.serial.requestPort();
+                await port.open({
+                    baudRate: 115200,
+                    dataBits: 8,
+                    stopBits: 1,
+                    parity: 'none'
+                });
+
+                const textDecoder = new TextDecoderStream();
+                const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+                reader = textDecoder.readable.getReader();
+
+                const textEncoder = new TextEncoderStream();
+                const writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
+                writer = textEncoder.writable.getWriter();
+
+                connected = true;
+
+                // Update UI
+                document.getElementById('connectBtn').innerHTML = '🔌 Disconnect';
+                document.getElementById('connectBtn').classList.remove('btn-primary');
+                document.getElementById('connectBtn').classList.add('btn-error');
+                document.getElementById('connStatus').textContent = 'Connected';
+                document.getElementById('connIndicator').classList.add('connected');
+                
+                // Enable all input buttons
+                document.querySelectorAll('.inputBtn').forEach(btn => {
+                    btn.disabled = false;
+                });
+
+                // Set remote mode
+                await sendCommand('SYST:REM');
+
+                // Read device state
+                await readDeviceState();
+
+                // Start monitoring
+                startMonitoring();
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                alert('Failed to connect: ' + error.message);
+            }
+        }
+
+        async function disconnect() {
+            monitoring = false;
+            if (monitorInterval) {
+                clearInterval(monitorInterval);
+            }
+
+            try {
+                if (inputEnabled) {
+                    await sendCommand('INP OFF');
+                }
+                await sendCommand('SYST:LOC');
+
+                if (reader) {
+                    await reader.cancel();
+                }
+                if (writer) {
+                    await writer.close();
+                }
+                if (port) {
+                    await port.close();
+                }
+
+            } catch (error) {
+                console.error('Disconnection error:', error);
+            }
+
+            // Always update UI state even if commands fail
+            connected = false;
+            inputEnabled = false;
+            port = null;
+            reader = null;
+            writer = null;
+
+            // Update UI
+            document.getElementById('connectBtn').innerHTML = '🔌 Connect';
+            document.getElementById('connectBtn').classList.remove('btn-error');
+            document.getElementById('connectBtn').classList.add('btn-primary');
+            document.getElementById('connStatus').textContent = 'Disconnected';
+            document.getElementById('connIndicator').classList.remove('connected');
+            
+            // Disable and reset all input buttons
+            document.querySelectorAll('.inputBtn').forEach(btn => {
+                btn.disabled = true;
+                btn.innerHTML = '🟢 INPUT ON';
+                btn.classList.remove('btn-error');
+                btn.classList.add('btn-success');
+            });
+            
+            document.getElementById('inputStatus').textContent = 'Input: OFF';
+        }
+
+        async function sendCommand(command) {
+            if (!connected || !writer) {
+                throw new Error('Not connected');
+            }
+            await writer.write(command + '\n');
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
+        async function queryCommand(command) {
+            if (!connected || !writer || !reader) {
+                throw new Error('Not connected');
+            }
+
+            await writer.write(command + '\n');
+            
+            const timeout = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Query timeout')), 1000)
+            );
+            
+            const read = reader.read().then(({ value, done }) => {
+                if (done) throw new Error('Reader closed');
+                return value.trim();
+            });
+
+            return Promise.race([read, timeout]);
+        }
+
+        // Read Device State
+        async function readDeviceState() {
+            try {
+                // Read current mode
+                try {
+                    const modeResp = await queryCommand('FUNC?');
+                    console.log('Current mode:', modeResp);
+                } catch(e) {
+                    console.log('Mode query failed');
+                }
+                
+                // Read current setpoint
+                try {
+                    const currentSetpoint = await queryCommand('CURR?');
+                    const current = parseFloat(currentSetpoint);
+                    if (!isNaN(current)) {
+                        document.getElementById('ccInput').value = current.toFixed(3);
+                        document.getElementById('ccDisplay').textContent = current.toFixed(3) + ' A';
+                        updateDialRotation('ccDial', current, 20);
+                    } else {
+                        // Default value
+                        document.getElementById('ccInput').value = '1.500';
+                        document.getElementById('ccDisplay').textContent = '1.500 A';
+                        updateDialRotation('ccDial', 1.5, 20);
+                    }
+                } catch(e) {
+                    console.log('Current query failed, using default');
+                    document.getElementById('ccInput').value = '1.500';
+                    document.getElementById('ccDisplay').textContent = '1.500 A';
+                    updateDialRotation('ccDial', 1.5, 20);
+                }
+
+                // Read current limit
+                try {
+                    const limitResp = await queryCommand('CURR:LIM?');
+                    const limit = parseFloat(limitResp);
+                    if (!isNaN(limit)) {
+                        document.getElementById('ccLimit').value = limit.toFixed(3);
+                    } else {
+                        document.getElementById('ccLimit').value = '20.000';
+                    }
+                } catch(e) {
+                    console.log('Current limit query not supported, using default');
+                    document.getElementById('ccLimit').value = '20.000';
+                }
+
+                // Read current range
+                try {
+                    const rangeResp = await queryCommand('CURR:RANG?');
+                    document.getElementById('ccRange').value = rangeResp.toUpperCase();
+                } catch(e) {
+                    console.log('Range query not supported, using default');
+                    document.getElementById('ccRange').value = 'AUTO';
+                }
+
+                // Read slew rate
+                try {
+                    const slewResp = await queryCommand('CURR:SLEW?');
+                    const slew = parseFloat(slewResp);
+                    if (!isNaN(slew)) {
+                        document.getElementById('ccSlew').value = slew.toFixed(3);
+                    } else {
+                        document.getElementById('ccSlew').value = '0.100';
+                    }
+                } catch(e) {
+                    console.log('Slew rate query not supported, using default');
+                    document.getElementById('ccSlew').value = '0.100';
+                }
+
+                // Read voltage on level
+                try {
+                    const vonResp = await queryCommand('VOLT:ON?');
+                    const von = parseFloat(vonResp);
+                    if (!isNaN(von)) {
+                        document.getElementById('ccVon').value = von.toFixed(3);
+                    } else {
+                        document.getElementById('ccVon').value = '1.500';
+                    }
+                } catch(e) {
+                    console.log('Voltage ON level query not supported, using default');
+                    document.getElementById('ccVon').value = '1.500';
+                }
+
+                // Read OVP
+                try {
+                    const ovpResp = await queryCommand('VOLT:PROT?');
+                    const ovp = parseFloat(ovpResp);
+                    if (!isNaN(ovp)) {
+                        document.getElementById('ccOvp').value = ovp.toFixed(1);
+                    } else {
+                        document.getElementById('ccOvp').value = '150';
+                    }
+
+                    const ovpStateResp = await queryCommand('VOLT:PROT:STAT?');
+                    document.getElementById('ccOvpEn').checked = (ovpStateResp === '1' || ovpStateResp.toUpperCase() === 'ON');
+                } catch(e) {
+                    console.log('OVP query not supported, using defaults');
+                    document.getElementById('ccOvp').value = '150';
+                    document.getElementById('ccOvpEn').checked = true;
+                }
+
+                // Read OCP
+                try {
+                    const ocpResp = await queryCommand('CURR:PROT?');
+                    const ocp = parseFloat(ocpResp);
+                    if (!isNaN(ocp)) {
+                        document.getElementById('ccOcp').value = ocp.toFixed(1);
+                    } else {
+                        document.getElementById('ccOcp').value = '20';
+                    }
+
+                    const ocpStateResp = await queryCommand('CURR:PROT:STAT?');
+                    document.getElementById('ccOcpEn').checked = (ocpStateResp === '1' || ocpStateResp.toUpperCase() === 'ON');
+                } catch(e) {
+                    console.log('OCP query not supported, using defaults');
+                    document.getElementById('ccOcp').value = '20';
+                    document.getElementById('ccOcpEn').checked = true;
+                }
+
+                // Read OPP
+                try {
+                    const oppResp = await queryCommand('POW:PROT?');
+                    const opp = parseFloat(oppResp);
+                    if (!isNaN(opp)) {
+                        document.getElementById('ccOpp').value = opp.toFixed(0);
+                    } else {
+                        document.getElementById('ccOpp').value = '200';
+                    }
+
+                    const oppStateResp = await queryCommand('POW:PROT:STAT?');
+                    document.getElementById('ccOppEn').checked = (oppStateResp === '1' || oppStateResp.toUpperCase() === 'ON');
+                } catch(e) {
+                    console.log('OPP query not supported, using defaults');
+                    document.getElementById('ccOpp').value = '200';
+                    document.getElementById('ccOppEn').checked = true;
+                }
+
+                // Read input state
+                try {
+                    const inputResp = await queryCommand('INP?');
+                    inputEnabled = (inputResp === '1' || inputResp.toUpperCase() === 'ON');
+                    if (inputEnabled) {
+                        document.querySelectorAll('.inputBtn').forEach(btn => {
+                            btn.innerHTML = '🔴 INPUT OFF';
+                            btn.classList.remove('btn-success');
+                            btn.classList.add('btn-error');
+                        });
+                        document.getElementById('inputStatus').textContent = 'Input: ON';
+                        startTime = Date.now();
+                    }
+                } catch(e) {
+                    console.log('Input state query not supported');
+                }
+
+                console.log('Device state read successfully');
+            } catch (error) {
+                console.error('Error reading device state:', error);
+            }
+        }
+
+        // Update dial rotation
+        function updateDialRotation(dialId, value, maxValue) {
+            const dial = document.getElementById(dialId);
+            const percentage = Math.min(value / maxValue, 1);
+            const degrees = percentage * 270; // 270 degrees for visual effect
+            dial.style.background = `conic-gradient(var(--primary) ${degrees}deg, var(--surface-light) ${degrees}deg)`;
+        }
+
+        // SCPI Commands
+        async function setMode(mode) {
+            const modes = {
+                'CC': 'CURR',
+                'CV': 'VOLT',
+                'CR': 'RES',
+                'CP': 'POW',
+                'DYNAMIC': 'DYN'
+            };
+            await sendCommand(`FUNC ${modes[mode]}`);
+        }
+
+        async function measureVoltage() {
+            try {
+                const response = await queryCommand('MEAS:VOLT?');
+                const value = parseFloat(response);
+                
+                // Validate: voltage should be a number and within reasonable range (0-200V)
+                if (isNaN(value) || value < 0 || value > 200) {
+                    console.warn(`Invalid voltage reading: ${response} (${value})`);
+                    return 0;
+                }
+                
+                return value;
+            } catch(e) {
+                console.error('Voltage measurement error:', e);
+                return 0;
+            }
+        }
+
+        async function measureCurrent() {
+            try {
+                const response = await queryCommand('MEAS:CURR?');
+                const value = parseFloat(response);
+                
+                // Validate: current should be a number and within reasonable range (0-25A)
+                if (isNaN(value) || value < 0 || value > 25) {
+                    console.warn(`Invalid current reading: ${response} (${value})`);
+                    return 0;
+                }
+                
+                return value;
+            } catch(e) {
+                console.error('Current measurement error:', e);
+                return 0;
+            }
+        }
+
+        async function measurePower() {
+            try {
+                const response = await queryCommand('MEAS:POW?');
+                const value = parseFloat(response);
+                
+                // Validate: power should be a number and within reasonable range (0-250W)
+                if (isNaN(value) || value < 0 || value > 250) {
+                    console.warn(`Invalid power reading: ${response} (${value})`);
+                    return 0;
+                }
+                
+                return value;
+            } catch(e) {
+                console.error('Power measurement error:', e);
+                return 0;
+            }
+        }
+
+        // Monitoring
+        let settingsUpdateCounter = 0;
+        const SETTINGS_UPDATE_INTERVAL = 10; // Update settings every 10 monitoring cycles
+        
+        function startMonitoring() {
+            monitoring = true;
+            settingsUpdateCounter = 0;
+            
+            monitorInterval = setInterval(async () => {
+                if (!connected) return;
+
+                try {
+                    const voltage = await measureVoltage();
+                    const current = await measureCurrent();
+                    const power = await measurePower();
+                    
+                    // Validate readings before using
+                    if (voltage === 0 && current === 0 && power === 0) {
+                        console.warn('All readings are zero - possible communication issue');
+                    }
+
+                    // Update statistics
+                    stats.voltage.min = Math.min(stats.voltage.min, voltage);
+                    stats.voltage.max = Math.max(stats.voltage.max, voltage);
+                    stats.current.min = Math.min(stats.current.min, current);
+                    stats.current.max = Math.max(stats.current.max, current);
+                    stats.power.min = Math.min(stats.power.min, power);
+                    stats.power.max = Math.max(stats.power.max, power);
+
+                    // Update capacity
+                    if (inputEnabled && startTime) {
+                        totalCapacity += (current * updateRate / 1000) / 3600;
+                        const elapsed = (Date.now() - startTime) / 1000;
+                        energy += (power * updateRate / 1000) / 3600;
+                    }
+
+                    // Add to buffers
+                    voltageData.push(voltage);
+                    currentData.push(current);
+                    powerData.push(power);
+                    capacityData.push(totalCapacity);
+                    timeData.push(inputEnabled && startTime ? (Date.now() - startTime) / 1000 : 0);
+
+                    // Trim buffers
+                    if (voltageData.length > bufferSize) {
+                        voltageData.shift();
+                        currentData.shift();
+                        powerData.shift();
+                        capacityData.shift();
+                        timeData.shift();
+                    }
+
+                    // Update UI
+                    updateReadings(voltage, current, power);
+                    updateChart();
+                    
+                    // Update battery display if in battery test mode
+                    if (currentMode === 'BATTERY') {
+                        updateBatteryDisplay(voltage, current, power);
+                    }
+                    
+                    // Periodically update settings (every 10 cycles = ~5 seconds at 500ms rate)
+                    settingsUpdateCounter++;
+                    if (settingsUpdateCounter >= SETTINGS_UPDATE_INTERVAL) {
+                        settingsUpdateCounter = 0;
+                        await updateLiveSettings();
+                    }
+
+                } catch (error) {
+                    console.error('Monitoring error:', error);
+                }
+            }, updateRate);
+        }
+
+        function updateReadings(voltage, current, power) {
+            document.getElementById('voltageReading').textContent = voltage.toFixed(3);
+            document.getElementById('currentReading').textContent = current.toFixed(3);
+            document.getElementById('powerReading').textContent = power.toFixed(2);
+            document.getElementById('capacityReading').textContent = totalCapacity.toFixed(1);
+            
+            document.getElementById('voltageMin').textContent = stats.voltage.min === Infinity ? '0.00' : stats.voltage.min.toFixed(2);
+            document.getElementById('voltageMax').textContent = stats.voltage.max === -Infinity ? '0.00' : stats.voltage.max.toFixed(2);
+            document.getElementById('currentMin').textContent = stats.current.min === Infinity ? '0.00' : stats.current.min.toFixed(2);
+            document.getElementById('currentMax').textContent = stats.current.max === -Infinity ? '0.00' : stats.current.max.toFixed(2);
+            document.getElementById('powerMin').textContent = stats.power.min === Infinity ? '0.00' : stats.power.min.toFixed(2);
+            document.getElementById('powerMax').textContent = stats.power.max === -Infinity ? '0.00' : stats.power.max.toFixed(2);
+
+            document.getElementById('energyReading').textContent = energy.toFixed(3) + ' Wh';
+
+            if (inputEnabled && startTime) {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                const hours = Math.floor(elapsed / 3600);
+                const minutes = Math.floor((elapsed % 3600) / 60);
+                const seconds = elapsed % 60;
+                document.getElementById('durationReading').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // Chart
+        function createChartConfig() {
+            return {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Voltage (V)',
+                            data: [],
+                            borderColor: '#2196F3',
+                            backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            hidden: false
+                        },
+                        {
+                            label: 'Current (A)',
+                            data: [],
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            hidden: false
+                        },
+                        {
+                            label: 'Power (W)',
+                            data: [],
+                            borderColor: '#FF5722',
+                            backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            hidden: false
+                        },
+                        {
+                            label: 'Capacity (mAh)',
+                            data: [],
+                            borderColor: '#9C27B0',
+                            backgroundColor: 'rgba(156, 39, 176, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            hidden: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#B0B0B0',
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { 
+                                color: '#B0B0B0',
+                                font: {
+                                    size: 9
+                                }
+                            },
+                            grid: { color: 'rgba(68, 68, 68, 0.2)' }
+                        },
+                        y: {
+                            ticks: { 
+                                color: '#B0B0B0',
+                                font: {
+                                    size: 9
+                                }
+                            },
+                            grid: { color: 'rgba(68, 68, 68, 0.2)' }
+                        }
+                    }
+                }
+            };
+        }
+
+        function initCharts() {
+            // Initialize chart for each mode
+            const ccCtx = document.getElementById('chart');
+            if (ccCtx) chart = new Chart(ccCtx.getContext('2d'), createChartConfig());
+            
+            const cvCtx = document.getElementById('cvChart');
+            if (cvCtx) cvChart = new Chart(cvCtx.getContext('2d'), createChartConfig());
+            
+            const crCtx = document.getElementById('crChart');
+            if (crCtx) crChart = new Chart(crCtx.getContext('2d'), createChartConfig());
+            
+            const cpCtx = document.getElementById('cpChart');
+            if (cpCtx) cpChart = new Chart(cpCtx.getContext('2d'), createChartConfig());
+            
+            const batteryCtx = document.getElementById('batteryChart');
+            if (batteryCtx) batteryChart = new Chart(batteryCtx.getContext('2d'), createChartConfig());
+        }
+
+        function updateChart() {
+            // Get the active chart based on current mode
+            let activeChart = null;
+            switch(currentMode) {
+                case 'CC': activeChart = chart; break;
+                case 'CV': activeChart = cvChart; break;
+                case 'CR': activeChart = crChart; break;
+                case 'CP': activeChart = cpChart; break;
+                case 'BATTERY': activeChart = batteryChart; break;
+                default: activeChart = chart;
+            }
+            
+            if (!activeChart) return;
+
+            activeChart.data.labels = timeData.map(t => t.toFixed(1));
+            activeChart.data.datasets[0].data = voltageData;
+            activeChart.data.datasets[1].data = currentData;
+            activeChart.data.datasets[2].data = powerData;
+            activeChart.data.datasets[3].data = capacityData;
+
+            // Update visibility based on checkboxes in the active panel
+            const checkboxes = document.querySelectorAll('.mode-panel.active .checkbox-label input[type="checkbox"]');
+            if (checkboxes.length >= 4) {
+                activeChart.data.datasets[0].hidden = !checkboxes[0].checked;
+                activeChart.data.datasets[1].hidden = !checkboxes[1].checked;
+                activeChart.data.datasets[2].hidden = !checkboxes[2].checked;
+                activeChart.data.datasets[3].hidden = !checkboxes[3].checked;
+            }
+
+            activeChart.update('none');
+        }
+
+        // UI Functions
+        async function toggleInput() {
+            if (!connected) return;
+
+            try {
+                const inputButtons = document.querySelectorAll('.inputBtn');
+                
+                if (!inputEnabled) {
+                    await applyModeSettings();
+                    await sendCommand('INP ON');
+                    inputEnabled = true;
+                    startTime = Date.now();
+                    
+                    // Update all input buttons
+                    inputButtons.forEach(btn => {
+                        btn.innerHTML = '🔴 INPUT OFF';
+                        btn.classList.remove('btn-success');
+                        btn.classList.add('btn-error');
+                    });
+                    document.getElementById('inputStatus').textContent = 'Input: ON';
+                } else {
+                    await sendCommand('INP OFF');
+                    inputEnabled = false;
+                    
+                    // Update all input buttons
+                    inputButtons.forEach(btn => {
+                        btn.innerHTML = '🟢 INPUT ON';
+                        btn.classList.remove('btn-error');
+                        btn.classList.add('btn-success');
+                    });
+                    document.getElementById('inputStatus').textContent = 'Input: OFF';
+                }
+            } catch (error) {
+                alert('Failed to toggle input: ' + error.message);
+            }
+        }
+
+        // Mode Management
+        async function setMode(mode) {
+            if (!connected) return;
+            
+            const modeMap = {
+                'CC': 'CURR',
+                'CV': 'VOLT',
+                'CR': 'RES',
+                'CP': 'POW',
+                'DYNAMIC': 'DYN'
+            };
+            
+            const funcCmd = modeMap[mode];
+            if (funcCmd) {
+                await sendCommand(`FUNC ${funcCmd}`);
+                console.log(`Set mode to ${mode} (FUNC ${funcCmd})`);
+            }
+        }
+
+        async function applyModeSettings() {
+            if (currentMode === 'CC') {
+                await setMode('CC');
+                const current = parseFloat(document.getElementById('ccInput').value);
+                await sendCommand(`CURR ${current}`);
+
+                // Apply protections
+                if (document.getElementById('ccOvpEn').checked) {
+                    const ovp = parseFloat(document.getElementById('ccOvp').value);
+                    await sendCommand(`VOLT:PROT ${ovp}`);
+                    await sendCommand('VOLT:PROT:STAT ON');
+                } else {
+                    await sendCommand('VOLT:PROT:STAT OFF');
+                }
+
+                if (document.getElementById('ccOcpEn').checked) {
+                    const ocp = parseFloat(document.getElementById('ccOcp').value);
+                    await sendCommand(`CURR:PROT ${ocp}`);
+                    await sendCommand('CURR:PROT:STAT ON');
+                } else {
+                    await sendCommand('CURR:PROT:STAT OFF');
+                }
+
+                if (document.getElementById('ccOppEn').checked) {
+                    const opp = parseFloat(document.getElementById('ccOpp').value);
+                    await sendCommand(`POW:PROT ${opp}`);
+                    await sendCommand('POW:PROT:STAT ON');
+                } else {
+                    await sendCommand('POW:PROT:STAT OFF');
+                }
+            } else if (currentMode === 'CV') {
+                await setMode('CV');
+                const voltage = parseFloat(document.getElementById('cvInput').value);
+                await sendCommand(`VOLT ${voltage}`);
+            } else if (currentMode === 'CR') {
+                await setMode('CR');
+                const resistance = parseFloat(document.getElementById('crInput').value);
+                await sendCommand(`RES ${resistance}`);
+            } else if (currentMode === 'CP') {
+                await setMode('CP');
+                const power = parseFloat(document.getElementById('cpInput').value);
+                await sendCommand(`POW ${power}`);
+            }
+        }
+
+        async function updateSetValue(mode) {
+            if (!connected) return;
+            
+            try {
+                if (mode === 'CC') {
+                    const current = parseFloat(document.getElementById('ccInput').value);
+                    if (!isNaN(current)) {
+                        document.getElementById('ccDisplay').textContent = current.toFixed(3) + ' A';
+                        updateDialRotation('ccDial', current, 20);
+                        await sendCommand(`CURR ${current}`);
+                    }
+                } else if (mode === 'CV') {
+                    const voltage = parseFloat(document.getElementById('cvInput').value);
+                    if (!isNaN(voltage)) {
+                        document.getElementById('cvDisplay').textContent = voltage.toFixed(3) + ' V';
+                        updateDialRotation('cvDial', voltage, 150);
+                        await sendCommand(`VOLT ${voltage}`);
+                    }
+                } else if (mode === 'CR') {
+                    const resistance = parseFloat(document.getElementById('crInput').value);
+                    if (!isNaN(resistance)) {
+                        document.getElementById('crDisplay').textContent = resistance.toFixed(3) + ' Ω';
+                        updateDialRotation('crDial', resistance, 10000);
+                        await sendCommand(`RES ${resistance}`);
+                    }
+                } else if (mode === 'CP') {
+                    const power = parseFloat(document.getElementById('cpInput').value);
+                    if (!isNaN(power)) {
+                        document.getElementById('cpDisplay').textContent = power.toFixed(2) + ' W';
+                        updateDialRotation('cpDial', power, 200);
+                        await sendCommand(`POW ${power}`);
+                    }
+                }
+            } catch(e) {
+                console.error('Failed to set value:', e);
+            }
+        }
+
+        // Immediate value update functions
+        async function updateCCRange() {
+            if (!connected) return;
+            try {
+                const range = document.getElementById('ccRange').value;
+                await sendCommand(`CURR:RANG ${range}`);
+            } catch(e) { console.error('Failed to set range:', e); }
+        }
+
+        async function updateCCSlew() {
+            if (!connected) return;
+            try {
+                const slew = parseFloat(document.getElementById('ccSlew').value);
+                if (!isNaN(slew)) {
+                    await sendCommand(`CURR:SLEW ${slew}`);
+                }
+            } catch(e) { console.error('Failed to set slew rate:', e); }
+        }
+
+        async function updateCCLimit() {
+            if (!connected) return;
+            try {
+                const limit = parseFloat(document.getElementById('ccLimit').value);
+                if (!isNaN(limit)) {
+                    await sendCommand(`CURR:LIM ${limit}`);
+                }
+            } catch(e) { console.error('Failed to set limit:', e); }
+        }
+
+        async function updateCCVon() {
+            if (!connected) return;
+            try {
+                const von = parseFloat(document.getElementById('ccVon').value);
+                if (!isNaN(von)) {
+                    await sendCommand(`VOLT:ON ${von}`);
+                }
+            } catch(e) { console.error('Failed to set voltage on:', e); }
+        }
+
+        async function updateOVP() {
+            if (!connected) return;
+            try {
+                const enabled = document.getElementById('ccOvpEn').checked;
+                const value = parseFloat(document.getElementById('ccOvp').value);
+                
+                if (enabled && !isNaN(value)) {
+                    await sendCommand(`VOLT:PROT ${value}`);
+                    await sendCommand('VOLT:PROT:STAT ON');
+                } else {
+                    await sendCommand('VOLT:PROT:STAT OFF');
+                }
+            } catch(e) { console.error('Failed to update OVP:', e); }
+        }
+
+        async function updateOCP() {
+            if (!connected) return;
+            try {
+                const enabled = document.getElementById('ccOcpEn').checked;
+                const value = parseFloat(document.getElementById('ccOcp').value);
+                
+                if (enabled && !isNaN(value)) {
+                    await sendCommand(`CURR:PROT ${value}`);
+                    await sendCommand('CURR:PROT:STAT ON');
+                } else {
+                    await sendCommand('CURR:PROT:STAT OFF');
+                }
+            } catch(e) { console.error('Failed to update OCP:', e); }
+        }
+
+        async function updateOPP() {
+            if (!connected) return;
+            try {
+                const enabled = document.getElementById('ccOppEn').checked;
+                const value = parseFloat(document.getElementById('ccOpp').value);
+                
+                if (enabled && !isNaN(value)) {
+                    await sendCommand(`POW:PROT ${value}`);
+                    await sendCommand('POW:PROT:STAT ON');
+                } else {
+                    await sendCommand('POW:PROT:STAT OFF');
+                }
+            } catch(e) { console.error('Failed to update OPP:', e); }
+        }
+
+        async function updateShortCircuit() {
+            if (!connected) return;
+            try {
+                const enabled = document.getElementById('ccShort').checked;
+                await sendCommand(`CURR:SHOR ${enabled ? 'ON' : 'OFF'}`);
+                console.log(`Short circuit ${enabled ? 'enabled' : 'disabled'}`);
+            } catch(e) { 
+                console.error('Failed to update short circuit:', e);
+                alert('Failed to update short circuit setting. This feature may not be supported by your device.');
+            }
+        }
+
+        async function updateRemoteSensing() {
+            if (!connected) return;
+            try {
+                let enabled = false;
+                
+                // Check which mode we're in and get the appropriate checkbox
+                if (currentMode === 'CC') {
+                    enabled = document.getElementById('ccRemote').checked;
+                } else if (currentMode === 'CV') {
+                    enabled = document.getElementById('cvRemote').checked;
+                }
+                
+                await sendCommand(`SENS:REM ${enabled ? 'ON' : 'OFF'}`);
+                console.log(`Remote sensing ${enabled ? 'enabled' : 'disabled'}`);
+            } catch(e) { 
+                console.error('Failed to update remote sensing:', e);
+                alert('Failed to update remote sensing setting. This feature may not be supported by your device.');
+            }
+        }
+
+        async function selectMode(mode) {
+            document.getElementById('loadBtn').classList.remove('active');
+            document.getElementById('batteryBtn').classList.remove('active');
+            
+            if (mode === 'load') {
+                document.getElementById('loadBtn').classList.add('active');
+                document.getElementById('submodes').style.display = 'block';
+                // Keep current submode panel active
+            } else {
+                document.getElementById('batteryBtn').classList.add('active');
+                document.getElementById('submodes').style.display = 'none';
+                
+                // Show battery panel
+                document.querySelectorAll('.mode-panel').forEach(panel => panel.classList.remove('active'));
+                const batteryPanel = document.getElementById('batteryPanel');
+                if (batteryPanel) {
+                    batteryPanel.classList.add('active');
+                }
+                currentMode = 'BATTERY';
+                document.getElementById('modeStatus').textContent = 'Battery Mode';
+                
+                // Automatically switch device to CC mode and read current
+                if (connected) {
+                    try {
+                        await setMode('CC');
+                        await readBatteryDischargeCurrent();
+                        console.log('Device switched to CC mode for battery testing');
+                    } catch(e) {
+                        console.error('Failed to switch to CC mode:', e);
+                    }
+                }
+            }
+        }
+
+        async function readBatteryDischargeCurrent() {
+            try {
+                const currentSetpoint = await queryCommand('CURR?');
+                const current = parseFloat(currentSetpoint);
+                if (!isNaN(current)) {
+                    document.getElementById('batteryDischargeCurrent').value = current.toFixed(3);
+                } else {
+                    document.getElementById('batteryDischargeCurrent').value = '';
+                }
+            } catch(e) {
+                console.log('Failed to read discharge current:', e);
+                document.getElementById('batteryDischargeCurrent').value = '';
+            }
+        }
+
+        async function updateBatteryDischargeCurrent() {
+            if (!connected) return;
+            
+            try {
+                const current = parseFloat(document.getElementById('batteryDischargeCurrent').value);
+                if (!isNaN(current) && current > 0) {
+                    await sendCommand(`CURR ${current}`);
+                    console.log(`Battery discharge current set to ${current}A`);
+                }
+            } catch(e) {
+                console.error('Failed to set discharge current:', e);
+            }
+        }
+
+        async function selectSubmode(mode) {
+            const buttons = document.querySelectorAll('.submode-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            currentMode = mode;
+            document.getElementById('modeStatus').textContent = mode + ' Mode';
+
+            const titles = {
+                'CC': '⚡ CONSTANT CURRENT (CC)',
+                'CV': '⚡ CONSTANT VOLTAGE (CV)',
+                'CR': '⚡ CONSTANT RESISTANCE (CR)',
+                'CP': '⚡ CONSTANT POWER (CP)',
+                'DYNAMIC': '⚡ DYNAMIC MODE'
+            };
+
+            // Show appropriate panel
+            document.querySelectorAll('.mode-panel').forEach(panel => panel.classList.remove('active'));
+            
+            const panelIds = {
+                'CC': 'ccPanel',
+                'CV': 'cvPanel',
+                'CR': 'crPanel',
+                'CP': 'cpPanel',
+                'DYNAMIC': 'dynamicPanel'
+            };
+            
+            const panelId = panelIds[mode];
+            if (panelId) {
+                const panel = document.getElementById(panelId);
+                if (panel) {
+                    panel.classList.add('active');
+                }
+            }
+
+            // Actually change device mode if connected
+            if (connected) {
+                try {
+                    await setMode(mode);
+                    console.log(`Device mode changed to ${mode}`);
+                    
+                    // Read the set value from device for each mode
+                    await readModeValue(mode);
+                } catch(e) {
+                    console.error('Failed to change device mode:', e);
+                }
+            } else {
+                // Initialize dial displays with empty values when not connected
+                if (mode === 'CV') {
+                    document.getElementById('cvDisplay').textContent = '-- V';
+                    document.getElementById('cvInput').value = '';
+                } else if (mode === 'CR') {
+                    document.getElementById('crDisplay').textContent = '-- Ω';
+                    document.getElementById('crInput').value = '';
+                } else if (mode === 'CP') {
+                    document.getElementById('cpDisplay').textContent = '-- W';
+                    document.getElementById('cpInput').value = '';
+                }
+            }
+        }
+
+        async function readModeValue(mode) {
+            try {
+                if (mode === 'CC') {
+                    // Read CC main setpoint
+                    const currentSetpoint = await queryCommand('CURR?');
+                    const current = parseFloat(currentSetpoint);
+                    if (!isNaN(current)) {
+                        document.getElementById('ccInput').value = current.toFixed(3);
+                        document.getElementById('ccDisplay').textContent = current.toFixed(3) + ' A';
+                        updateDialRotation('ccDial', current, 20);
+                    } else {
+                        document.getElementById('ccInput').value = '';
+                        document.getElementById('ccDisplay').textContent = '-- A';
+                    }
+                    
+                    // Read CC settings
+                    await readCCSettings();
+                    
+                } else if (mode === 'CV') {
+                    // Read CV main setpoint
+                    const voltageSetpoint = await queryCommand('VOLT?');
+                    const voltage = parseFloat(voltageSetpoint);
+                    if (!isNaN(voltage)) {
+                        document.getElementById('cvInput').value = voltage.toFixed(3);
+                        document.getElementById('cvDisplay').textContent = voltage.toFixed(3) + ' V';
+                        updateDialRotation('cvDial', voltage, 150);
+                    } else {
+                        document.getElementById('cvInput').value = '';
+                        document.getElementById('cvDisplay').textContent = '-- V';
+                    }
+                    
+                    // Read CV settings
+                    await readCVSettings();
+                    
+                } else if (mode === 'CR') {
+                    // Read CR main setpoint
+                    const resistanceSetpoint = await queryCommand('RES?');
+                    const resistance = parseFloat(resistanceSetpoint);
+                    if (!isNaN(resistance)) {
+                        document.getElementById('crInput').value = resistance.toFixed(3);
+                        document.getElementById('crDisplay').textContent = resistance.toFixed(3) + ' Ω';
+                        updateDialRotation('crDial', resistance, 10000);
+                    } else {
+                        document.getElementById('crInput').value = '';
+                        document.getElementById('crDisplay').textContent = '-- Ω';
+                    }
+                    
+                    // Read CR settings
+                    await readCRSettings();
+                    
+                } else if (mode === 'CP') {
+                    // Read CP main setpoint
+                    const powerSetpoint = await queryCommand('POW?');
+                    const power = parseFloat(powerSetpoint);
+                    if (!isNaN(power)) {
+                        document.getElementById('cpInput').value = power.toFixed(2);
+                        document.getElementById('cpDisplay').textContent = power.toFixed(2) + ' W';
+                        updateDialRotation('cpDial', power, 200);
+                    } else {
+                        document.getElementById('cpInput').value = '';
+                        document.getElementById('cpDisplay').textContent = '-- W';
+                    }
+                    
+                    // Read CP settings
+                    await readCPSettings();
+                }
+            } catch(e) {
+                console.error(`Failed to read ${mode} value:`, e);
+                // Set empty values on error
+                if (mode === 'CV') {
+                    document.getElementById('cvInput').value = '';
+                    document.getElementById('cvDisplay').textContent = '-- V';
+                } else if (mode === 'CR') {
+                    document.getElementById('crInput').value = '';
+                    document.getElementById('crDisplay').textContent = '-- Ω';
+                } else if (mode === 'CP') {
+                    document.getElementById('cpInput').value = '';
+                    document.getElementById('cpDisplay').textContent = '-- W';
+                }
+            }
+        }
+
+        // Periodic settings update
+        async function updateLiveSettings() {
+            if (!connected) return;
+            
+            try {
+                // Update based on current mode
+                if (currentMode === 'CC') {
+                    // Short Circuit status
+                    try {
+                        const shortResp = await queryCommand('CURR:SHOR?');
+                        const isOn = (shortResp === '1' || shortResp.toUpperCase() === 'ON');
+                        document.getElementById('ccShort').checked = isOn;
+                        console.log('Short circuit status updated:', isOn);
+                    } catch(e) {
+                        // Silently fail if not supported
+                    }
+                    
+                    // Remote Sensing status
+                    try {
+                        const remoteResp = await queryCommand('SENS:REM?');
+                        const isOn = (remoteResp === '1' || remoteResp.toUpperCase() === 'ON');
+                        document.getElementById('ccRemote').checked = isOn;
+                    } catch(e) {
+                        // Silently fail if not supported
+                    }
+                    
+                    // OVP/OCP/OPP states
+                    try {
+                        const ovpStateResp = await queryCommand('VOLT:PROT:STAT?');
+                        document.getElementById('ccOvpEn').checked = (ovpStateResp === '1' || ovpStateResp.toUpperCase() === 'ON');
+                    } catch(e) {}
+                    
+                    try {
+                        const ocpStateResp = await queryCommand('CURR:PROT:STAT?');
+                        document.getElementById('ccOcpEn').checked = (ocpStateResp === '1' || ocpStateResp.toUpperCase() === 'ON');
+                    } catch(e) {}
+                    
+                    try {
+                        const oppStateResp = await queryCommand('POW:PROT:STAT?');
+                        document.getElementById('ccOppEn').checked = (oppStateResp === '1' || oppStateResp.toUpperCase() === 'ON');
+                    } catch(e) {}
+                    
+                } else if (currentMode === 'CV') {
+                    // Remote Sensing status for CV
+                    try {
+                        const remoteResp = await queryCommand('SENS:REM?');
+                        const isOn = (remoteResp === '1' || remoteResp.toUpperCase() === 'ON');
+                        document.getElementById('cvRemote').checked = isOn;
+                    } catch(e) {
+                        // Silently fail if not supported
+                    }
+                }
+            } catch(e) {
+                console.error('Live settings update error:', e);
+            }
+        }
+
+        async function readCCSettings() {
+            // Current Range
+            try {
+                const rangeResp = await queryCommand('CURR:RANG?');
+                document.getElementById('ccRange').value = rangeResp.toUpperCase();
+            } catch(e) {
+                console.log('CURR:RANG? not supported');
+            }
+
+            // Slew Rate
+            try {
+                const slewResp = await queryCommand('CURR:SLEW?');
+                const slew = parseFloat(slewResp);
+                if (!isNaN(slew)) {
+                    document.getElementById('ccSlew').value = slew.toFixed(3);
+                }
+            } catch(e) {
+                console.log('CURR:SLEW? not supported');
+            }
+
+            // Current Limit
+            try {
+                const limitResp = await queryCommand('CURR:LIM?');
+                const limit = parseFloat(limitResp);
+                if (!isNaN(limit)) {
+                    document.getElementById('ccLimit').value = limit.toFixed(3);
+                }
+            } catch(e) {
+                console.log('CURR:LIM? not supported');
+            }
+
+            // Voltage On Level
+            try {
+                const vonResp = await queryCommand('VOLT:ON?');
+                const von = parseFloat(vonResp);
+                if (!isNaN(von)) {
+                    document.getElementById('ccVon').value = von.toFixed(3);
+                }
+            } catch(e) {
+                console.log('VOLT:ON? not supported');
+            }
+
+            // Short Circuit
+            try {
+                const shortResp = await queryCommand('CURR:SHOR?');
+                document.getElementById('ccShort').checked = (shortResp === '1' || shortResp.toUpperCase() === 'ON');
+            } catch(e) {
+                console.log('CURR:SHOR? not supported');
+            }
+
+            // Remote Sensing
+            try {
+                const remoteResp = await queryCommand('SENS:REM?');
+                document.getElementById('ccRemote').checked = (remoteResp === '1' || remoteResp.toUpperCase() === 'ON');
+            } catch(e) {
+                console.log('SENS:REM? not supported');
+            }
+
+            // OVP, OCP, OPP already read in readDeviceState, but we can re-read them
+            try {
+                const ovpResp = await queryCommand('VOLT:PROT?');
+                const ovp = parseFloat(ovpResp);
+                if (!isNaN(ovp)) {
+                    document.getElementById('ccOvp').value = ovp.toFixed(1);
+                }
+                const ovpStateResp = await queryCommand('VOLT:PROT:STAT?');
+                document.getElementById('ccOvpEn').checked = (ovpStateResp === '1' || ovpStateResp.toUpperCase() === 'ON');
+            } catch(e) {
+                console.log('OVP query not supported');
+            }
+
+            try {
+                const ocpResp = await queryCommand('CURR:PROT?');
+                const ocp = parseFloat(ocpResp);
+                if (!isNaN(ocp)) {
+                    document.getElementById('ccOcp').value = ocp.toFixed(1);
+                }
+                const ocpStateResp = await queryCommand('CURR:PROT:STAT?');
+                document.getElementById('ccOcpEn').checked = (ocpStateResp === '1' || ocpStateResp.toUpperCase() === 'ON');
+            } catch(e) {
+                console.log('OCP query not supported');
+            }
+
+            try {
+                const oppResp = await queryCommand('POW:PROT?');
+                const opp = parseFloat(oppResp);
+                if (!isNaN(opp)) {
+                    document.getElementById('ccOpp').value = opp.toFixed(0);
+                }
+                const oppStateResp = await queryCommand('POW:PROT:STAT?');
+                document.getElementById('ccOppEn').checked = (oppStateResp === '1' || oppStateResp.toUpperCase() === 'ON');
+            } catch(e) {
+                console.log('OPP query not supported');
+            }
+        }
+
+        async function readCVSettings() {
+            // Voltage Range
+            try {
+                const rangeResp = await queryCommand('VOLT:RANG?');
+                document.getElementById('cvRange').value = rangeResp.toUpperCase();
+            } catch(e) {
+                console.log('VOLT:RANG? not supported');
+            }
+
+            // Voltage On
+            try {
+                const vonResp = await queryCommand('VOLT:ON?');
+                const von = parseFloat(vonResp);
+                if (!isNaN(von)) {
+                    document.getElementById('cvVon').value = von.toFixed(3);
+                }
+            } catch(e) {
+                console.log('VOLT:ON? not supported');
+            }
+
+            // Current Limit
+            try {
+                const limitResp = await queryCommand('CURR:LIM?');
+                const limit = parseFloat(limitResp);
+                if (!isNaN(limit)) {
+                    document.getElementById('cvLimit').value = limit.toFixed(3);
+                }
+            } catch(e) {
+                console.log('CURR:LIM? not supported');
+            }
+
+            // Remote Sensing
+            try {
+                const remoteResp = await queryCommand('SENS:REM?');
+                document.getElementById('cvRemote').checked = (remoteResp === '1' || remoteResp.toUpperCase() === 'ON');
+            } catch(e) {
+                console.log('SENS:REM? not supported');
+            }
+        }
+
+        async function readCRSettings() {
+            // Current Limit
+            try {
+                const limitResp = await queryCommand('CURR:LIM?');
+                const limit = parseFloat(limitResp);
+                if (!isNaN(limit)) {
+                    document.getElementById('crCurrentLimit').value = limit.toFixed(3);
+                }
+            } catch(e) {
+                console.log('CURR:LIM? not supported');
+            }
+
+            // Power Limit
+            try {
+                const powerLimitResp = await queryCommand('POW:LIM?');
+                const powerLimit = parseFloat(powerLimitResp);
+                if (!isNaN(powerLimit)) {
+                    document.getElementById('crPowerLimit').value = powerLimit.toFixed(0);
+                }
+            } catch(e) {
+                console.log('POW:LIM? not supported');
+            }
+        }
+
+        async function readCPSettings() {
+            // Voltage Limit
+            try {
+                const voltLimitResp = await queryCommand('VOLT:LIM?');
+                const voltLimit = parseFloat(voltLimitResp);
+                if (!isNaN(voltLimit)) {
+                    document.getElementById('cpVoltageLimit').value = voltLimit.toFixed(1);
+                }
+            } catch(e) {
+                console.log('VOLT:LIM? not supported');
+            }
+
+            // Current Limit
+            try {
+                const currLimitResp = await queryCommand('CURR:LIM?');
+                const currLimit = parseFloat(currLimitResp);
+                if (!isNaN(currLimit)) {
+                    document.getElementById('cpCurrentLimit').value = currLimit.toFixed(3);
+                }
+            } catch(e) {
+                console.log('CURR:LIM? not supported');
+            }
+
+            // Slew Rate
+            try {
+                const slewResp = await queryCommand('POW:SLEW?');
+                const slew = parseFloat(slewResp);
+                if (!isNaN(slew)) {
+                    document.getElementById('cpSlewRate').value = slew.toFixed(3);
+                }
+            } catch(e) {
+                console.log('POW:SLEW? not supported');
+            }
+        }
+
+        function selectRadio(element, groupId) {
+            const parent = element.parentElement;
+            parent.querySelectorAll('.radio-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        function applySettings() {
+            updateRate = parseInt(document.getElementById('updateRate').value);
+            bufferSize = parseInt(document.getElementById('bufferSize').value);
+            
+            if (monitoring) {
+                clearInterval(monitorInterval);
+                startMonitoring();
+            }
+            
+            alert('Settings applied successfully');
+        }
+
+        function clearData() {
+            voltageData = [];
+            currentData = [];
+            powerData = [];
+            capacityData = [];
+            timeData = [];
+            totalCapacity = 0;
+            energy = 0;
+            startTime = null;
+
+            stats = {
+                voltage: { min: Infinity, max: -Infinity },
+                current: { min: Infinity, max: -Infinity },
+                power: { min: Infinity, max: -Infinity }
+            };
+
+            updateChart();
+        }
+
+        function saveData() {
+            if (timeData.length === 0) {
+                alert('No data to save');
+                return;
+            }
+
+            let csv = 'Time (s),Voltage (V),Current (A),Power (W),Capacity (mAh)\n';
+            for (let i = 0; i < timeData.length; i++) {
+                csv += `${timeData[i].toFixed(3)},${voltageData[i].toFixed(3)},${currentData[i].toFixed(3)},${powerData[i].toFixed(2)},${capacityData[i].toFixed(3)}\n`;
+            }
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `owon_data_${new Date().toISOString().replace(/[:.]/g, '-')}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function saveSnapshot() {
+            // Get the active chart canvas based on current mode
+            let canvasId = 'chart';
+            switch(currentMode) {
+                case 'CC': canvasId = 'chart'; break;
+                case 'CV': canvasId = 'cvChart'; break;
+                case 'CR': canvasId = 'crChart'; break;
+                case 'CP': canvasId = 'cpChart'; break;
+                case 'BATTERY': canvasId = 'batteryChart'; break;
+                default: canvasId = 'chart';
+            }
+            
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            const url = canvas.toDataURL('image/png');
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `owon_${currentMode}_graph_${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+            a.click();
+        }
+
+        async function resetDevice() {
+            if (!connected) return;
+            if (confirm('Reset device to default state?')) {
+                try {
+                    await sendCommand('INP OFF');
+                    await setMode('CC');
+                    await sendCommand('CURR 0');
+                    alert('Device reset successfully');
+                } catch (error) {
+                    alert('Reset failed: ' + error.message);
+                }
+            }
+        }
+
+        function showAbout() {
+            document.getElementById('aboutModal').classList.add('active');
+        }
+
+        function closeAbout() {
+            document.getElementById('aboutModal').classList.remove('active');
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        // Close modal on outside click
+        document.getElementById('aboutModal').addEventListener('click', (e) => {
+            if (e.target.id === 'aboutModal') {
+                closeAbout();
+            }
+        });
+        // Battery Test Functions
+        let batteryTestActive = false;
+        let batteryTestStartTime = null;
+        let batteryTotalCapacity = 0;
+        let batteryVoltageSum = 0;
+        let batteryVoltageSamples = 0;
+
+        async function startBatteryTest() {
+            if (!connected) {
+                alert('Please connect to device first');
+                return;
+            }
+
+            try {
+                // Read current setpoint from device
+                const currentSetpoint = await queryCommand('CURR?');
+                const current = parseFloat(currentSetpoint);
+                
+                if (isNaN(current) || current <= 0) {
+                    alert('Invalid discharge current. Please set current in CC mode first.');
+                    return;
+                }
+                
+                // Update display with actual current
+                document.getElementById('batteryDischargeCurrent').value = current.toFixed(3);
+                
+                // Set to CC mode
+                await setMode('CC');
+                
+                // Ensure current is set
+                await sendCommand(`CURR ${current}`);
+                
+                // Reset statistics
+                batteryTestActive = true;
+                batteryTestStartTime = Date.now();
+                batteryTotalCapacity = 0;
+                batteryVoltageSum = 0;
+                batteryVoltageSamples = 0;
+                
+                // Clear data
+                clearData();
+                
+                // Turn on input
+                if (!inputEnabled) {
+                    await sendCommand('INP ON');
+                    inputEnabled = true;
+                    document.querySelectorAll('.inputBtn').forEach(btn => {
+                        btn.innerHTML = '🔴 INPUT OFF';
+                        btn.classList.remove('btn-success');
+                        btn.classList.add('btn-error');
+                    });
+                    document.getElementById('inputStatus').textContent = 'Input: ON';
+                }
+                
+                console.log(`Battery test started with ${current}A discharge current`);
+                alert(`Battery test started\nDischarge current: ${current.toFixed(3)}A\nMonitoring...`);
+                
+            } catch(e) {
+                console.error('Failed to start battery test:', e);
+                alert('Failed to start battery test: ' + e.message);
+            }
+        }
+
+        async function stopBatteryTest() {
+            if (!batteryTestActive) return;
+            
+            batteryTestActive = false;
+            
+            try {
+                await sendCommand('INP OFF');
+                inputEnabled = false;
+                document.querySelectorAll('.inputBtn').forEach(btn => {
+                    btn.innerHTML = '🟢 INPUT ON';
+                    btn.classList.remove('btn-error');
+                    btn.classList.add('btn-success');
+                });
+                document.getElementById('inputStatus').textContent = 'Input: OFF';
+                
+                console.log('Battery test stopped');
+                alert('Battery test stopped.');
+                
+            } catch(e) {
+                console.error('Failed to stop battery test:', e);
+            }
+        }
+
+        function updateBatteryDisplay(voltage, current, power) {
+            if (!batteryTestActive) return;
+            
+            // Update voltage display
+            document.getElementById('batteryVoltage').textContent = voltage.toFixed(3) + ' V';
+            document.getElementById('batteryCurrent').textContent = current.toFixed(3) + ' A';
+            
+            // Calculate elapsed time
+            const elapsed = Date.now() - batteryTestStartTime;
+            const hours = Math.floor(elapsed / 3600000);
+            const minutes = Math.floor((elapsed % 3600000) / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            document.getElementById('batteryTime').textContent = 
+                String(hours).padStart(2, '0') + ':' + 
+                String(minutes).padStart(2, '0') + ':' + 
+                String(seconds).padStart(2, '0');
+            
+            // Calculate capacity (mAh)
+            const deltaTime = updateRate / 3600000; // Convert ms to hours
+            batteryTotalCapacity += current * deltaTime * 1000; // Convert to mAh
+            document.getElementById('batteryDischarged').textContent = batteryTotalCapacity.toFixed(0) + ' mAh';
+            
+            // Calculate energy (Wh)
+            const energy = (batteryTotalCapacity * voltage) / 1000;
+            document.getElementById('batteryEnergy').textContent = energy.toFixed(2) + ' Wh';
+            
+            // Calculate average voltage
+            batteryVoltageSum += voltage;
+            batteryVoltageSamples++;
+            const avgVoltage = batteryVoltageSum / batteryVoltageSamples;
+            document.getElementById('batteryAvgVolt').textContent = avgVoltage.toFixed(3) + ' V';
+            
+            // Calculate SOC (simple linear approximation)
+            const batteryCapacity = parseFloat(document.getElementById('batteryCapacity').value);
+            const soc = Math.max(0, Math.min(100, ((batteryCapacity - batteryTotalCapacity) / batteryCapacity) * 100));
+            document.getElementById('batterySOC').textContent = soc.toFixed(1) + '%';
+            document.getElementById('batterySOCBar').style.width = soc + '%';
+            
+            // Check cutoff voltage only
+            const cutoffVoltage = parseFloat(document.getElementById('batteryCutoff').value);
+            const autoStop = document.getElementById('batteryAutoStop').checked;
+            
+            if (autoStop && voltage <= cutoffVoltage) {
+                stopBatteryTest();
+                alert(`Battery test completed!\n\nCutoff voltage reached: ${voltage.toFixed(3)}V\nCapacity: ${batteryTotalCapacity.toFixed(0)}mAh\nEnergy: ${energy.toFixed(2)}Wh\nDuration: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+            }
+        }
+
+    </script>
+</body>
+</html>
