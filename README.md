@@ -6,6 +6,13 @@ A modern, web-based control interface for the OWON OEL8511 Electronic Load using
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Browser](https://img.shields.io/badge/browser-Chrome%20%7C%20Edge%20%7C%20Opera-orange)
 
+<p align="center">
+  <a href="https://www.paypal.com/paypalme/jobitjoseph">
+    <img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" alt="Donate with PayPal" />
+  </a>
+</p>
+
+
 ## ✨ Features
 
 ### 🎮 **Multiple Operating Modes**
