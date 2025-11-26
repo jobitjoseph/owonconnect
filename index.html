@@ -1507,6 +1507,25 @@
         let currentMode = 'CC';
         let inputEnabled = false;
 
+        class LineBreakTransformer {
+            constructor() {
+                this.container = '';
+            }
+
+            transform(chunk, controller) {
+                this.container += chunk;
+                const lines = this.container.split('\n');
+                this.container = lines.pop();
+                lines.forEach(line => controller.enqueue(line));
+            }
+
+            flush(controller) {
+                if (this.container) {
+                    controller.enqueue(this.container);
+                }
+            }
+        }
+
         // Data buffers
         let updateRate = 500;
         let bufferSize = 1000;
@@ -1565,7 +1584,10 @@
 
                 const textDecoder = new TextDecoderStream();
                 const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
-                reader = textDecoder.readable.getReader();
+                // Pipe through the LineBreakTransformer
+                const lineStream = textDecoder.readable
+                    .pipeThrough(new TransformStream(new LineBreakTransformer()));
+                reader = lineStream.getReader();
 
                 const textEncoder = new TextEncoderStream();
                 const writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
