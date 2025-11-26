@@ -1094,15 +1094,77 @@
                 </div>
             </div>
 
-            <!-- Dynamic Mode Panel - Placeholder -->
+            <!-- Dynamic Mode Panel -->
             <div id="dynamicPanel" class="mode-panel">
                 <div class="mode-header">
                     <h3 class="mode-title">⚡ DYNAMIC MODE</h3>
                     <button class="btn btn-success inputBtn" onclick="toggleInput()" disabled>🟢 INPUT ON</button>
                 </div>
-                <div class="card">
-                    <div class="card-header">DYNAMIC MODE</div>
-                    <p style="padding: 20px; text-align: center; color: var(--text-secondary);">Dynamic mode panel - Coming soon</p>
+
+                <div class="card-row">
+                    <div class="card">
+                        <div class="card-header">LEVEL A</div>
+                        <div class="control-grid-2col">
+                            <div class="control-group">
+                                <label>Current A</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="dynCurA" step="0.001" style="width: 70%;" onchange="updateDynamic('CURR:A')">
+                                    <span class="unit">A</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>T1</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="dynWidA" step="0.001" style="width: 70%;" onchange="updateDynamic('WID:A')">
+                                    <span class="unit">ms</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">LEVEL B</div>
+                        <div class="control-grid-2col">
+                            <div class="control-group">
+                                <label>Current B</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="dynCurB" step="0.001" style="width: 70%;" onchange="updateDynamic('CURR:B')">
+                                    <span class="unit">A</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label>T2</label>
+                                <div style="display: flex; align-items: center; gap: 4px;">
+                                    <input type="number" id="dynWidB" step="0.001" style="width: 70%;" onchange="updateDynamic('WID:B')">
+                                    <span class="unit">ms</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">SETTINGS</div>
+                        <div class="control-group">
+                            <label>Run Mode</label>
+                            <select id="dynMode" onchange="updateDynamic('MODE')">
+                                <option value="CONT">Continuous</option>
+                                <option value="PULS">Pulse</option>
+                                <option value="TOGG">Toggle</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label>Graph Display</label>
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> V</label>
+                                <label class="checkbox-label"><input type="checkbox" checked onchange="updateChart()"> A</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card graph-card" style="margin-top: 12px;">
+                    <div class="card-header">📈 REAL-TIME GRAPH</div>
+                    <canvas id="dynChart" class="graph-canvas"></canvas>
                 </div>
             </div>
 
@@ -2119,8 +2181,13 @@ async function measureAll() {
             
             const batteryCtx = document.getElementById('batteryChart');
             if (batteryCtx) batteryChart = new Chart(batteryCtx.getContext('2d'), createChartConfig());
+
+            const dynCtx = document.getElementById('dynChart');
+            if (dynCtx) window.dynChart = new Chart(dynCtx.getContext('2d'), createChartConfig());
         }
 
+
+        
         function updateChart() {
             // Get the active chart based on current mode
             let activeChart = null;
@@ -2130,6 +2197,7 @@ async function measureAll() {
                 case 'CR': activeChart = crChart; break;
                 case 'CP': activeChart = cpChart; break;
                 case 'BATTERY': activeChart = batteryChart; break;
+                case 'DYNAMIC': activeChart = window.dynChart; break;
                 default: activeChart = chart;
             }
             
@@ -2251,6 +2319,19 @@ async function measureAll() {
                 await setMode('CP');
                 const power = parseFloat(document.getElementById('cpInput').value);
                 await sendCommand(`POW ${power}`);
+            } else if (currentMode === 'DYNAMIC') { // --- ADD THIS BLOCK ---
+                await setMode('DYNAMIC');
+                const ca = document.getElementById('dynCurA').value;
+                const cb = document.getElementById('dynCurB').value;
+                const wa = document.getElementById('dynWidA').value;
+                const wb = document.getElementById('dynWidB').value;
+                const dm = document.getElementById('dynMode').value;
+
+                await sendCommand(`DYN:CURR:A ${ca}`);
+                await sendCommand(`DYN:CURR:B ${cb}`);
+                await sendCommand(`DYN:WID:A ${wa}`);
+                await sendCommand(`DYN:WID:B ${wb}`);
+                await sendCommand(`DYN:MODE ${dm}`);
             }
         }
 
@@ -2292,6 +2373,37 @@ async function measureAll() {
             }
         }
 
+
+        async function updateDynamic(param) {
+            if (!connected) return;
+            try {
+                let cmd = '';
+                let val = '';
+                
+                if (param === 'CURR:A') {
+                    val = document.getElementById('dynCurA').value;
+                    cmd = `DYN:CURR:A ${val}`;
+                } else if (param === 'CURR:B') {
+                    val = document.getElementById('dynCurB').value;
+                    cmd = `DYN:CURR:B ${val}`;
+                } else if (param === 'WID:A') {
+                    val = document.getElementById('dynWidA').value;
+                    cmd = `DYN:WID:A ${val}`;
+                } else if (param === 'WID:B') {
+                    val = document.getElementById('dynWidB').value;
+                    cmd = `DYN:WID:B ${val}`;
+                } else if (param === 'MODE') {
+                    val = document.getElementById('dynMode').value;
+                    cmd = `DYN:MODE ${val}`;
+                }
+
+                if(cmd) await sendCommand(cmd);
+            } catch(e) {
+                console.error('Dynamic update failed:', e);
+            }
+        }
+
+        
         // Immediate value update functions
         async function updateCCRange() {
             if (!connected) return;
@@ -2598,6 +2710,39 @@ async function measureAll() {
                     // Read CP settings
                     await readCPSettings();
                 }
+
+                else if (mode === 'DYNAMIC') { // --- ADD THIS BLOCK ---
+                    try {
+                        // Read Current A
+                        const curA = await queryCommand('DYN:CURR:A?');
+                        document.getElementById('dynCurA').value = parseFloat(curA).toFixed(3);
+                        
+                        // Read Current B
+                        const curB = await queryCommand('DYN:CURR:B?');
+                        document.getElementById('dynCurB').value = parseFloat(curB).toFixed(3);
+
+                        // Read Width A
+                        const widA = await queryCommand('DYN:WID:A?');
+                        document.getElementById('dynWidA').value = parseFloat(widA).toFixed(3);
+
+                        // Read Width B
+                        const widB = await queryCommand('DYN:WID:B?');
+                        document.getElementById('dynWidB').value = parseFloat(widB).toFixed(3);
+
+                        // Read Mode
+                        const dMode = await queryCommand('DYN:MODE?');
+                        // Clean up response string (sometimes returns "CONT" or "0")
+                        let modeVal = dMode.trim().toUpperCase();
+                        if(modeVal.includes("CONT")) modeVal = "CONT";
+                        else if(modeVal.includes("PULS")) modeVal = "PULS";
+                        else if(modeVal.includes("TOGG")) modeVal = "TOGG";
+                        document.getElementById('dynMode').value = modeVal;
+
+                    } catch(e) {
+                        console.log('Error reading dynamic settings', e);
+                    }
+                }
+
             } catch(e) {
                 console.error(`Failed to read ${mode} value:`, e);
                 // Set empty values on error
