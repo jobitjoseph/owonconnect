@@ -437,66 +437,6 @@ Customize what's displayed:
 7. **Remote Sensing**: Enable for accurate voltage measurements
 8. **Update Rate**: Balance between resolution and data volume
 
-## 🗺️ Roadmap
-
-### Planned Features
-
-- [ ] Profile save/load functionality
-- [ ] Automated test sequences
-- [ ] CSV data import for replay
-- [ ] Multiple graph view modes
-- [ ] PDF report generation
-- [ ] Multi-device support
-- [ ] Offline mode with simulation
-- [ ] Advanced statistics (FFT, harmonics)
-- [ ] Trigger-based capture
-- [ ] Remote API access
-
-### Under Consideration
-
-- [ ] Dynamic mode implementation
-- [ ] Custom waveform generation
-- [ ] Data streaming to external tools
-- [ ] Mobile app version
-- [ ] Cloud data sync
-- [ ] Comparison tools
-
-## 🤝 Contributing
-
-Contributions are welcome! Here's how you can help:
-
-### Bug Reports
-
-Found a bug? Please create an issue with:
-- **Description**: What happened vs. what should happen
-- **Steps to Reproduce**: Detailed steps
-- **Environment**: Browser, OS, device firmware
-- **Console Output**: Any error messages
-- **Screenshots**: If applicable
-
-### Feature Requests
-
-Have an idea? Please include:
-- **Use Case**: Why is this feature needed?
-- **Description**: What should it do?
-- **Examples**: How would it work?
-- **Priority**: How important is this?
-
-### Pull Requests
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-Please ensure:
-- Code follows existing style
-- Comments explain complex logic
-- No console errors
-- Tested in Chrome/Edge/Opera
-- README updated if needed
-
 ## 📜 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
