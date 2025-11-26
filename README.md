@@ -21,6 +21,7 @@ A modern, web-based control interface for the OWON OEL8511 Electronic Load using
 - **Constant Voltage (CV)** - Voltage regulation mode
 - **Constant Resistance (CR)** - Electronic resistance simulation
 - **Constant Power (CP)** - Power dissipation control
+- - **Dynamic mode** - Switch between two preset current levels
 - **Battery Test** - Automated discharge testing with capacity measurement
 
 ### 📊 **Real-Time Monitoring**
