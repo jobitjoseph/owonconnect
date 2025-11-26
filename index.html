@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OWON OEL85xx - Control Interface</title>
+    <title>OWON OEL8511 - Control Interface</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
@@ -605,7 +605,7 @@
     <div class="header">
         <div class="logo">
             <div class="logo-icon">O</div>
-            <span>OWON OEL85xx</span>
+            <span>OWON OEL8511</span>
         </div>
         <div class="header-controls">
             <button class="btn btn-secondary" onclick="showAbout()">ℹ️ About</button>
@@ -1857,8 +1857,7 @@
             };
             await sendCommand(`FUNC ${modes[mode]}`);
         }
-
-        async function measureAll() {
+async function measureAll() {
     try {
         // Send single command to get all data at once
         // Source: OEL85_Programming_Manual.pdf, Page 35
@@ -1894,7 +1893,7 @@
         return null;
     }
 }
-
+        
         // Monitoring
         let settingsUpdateCounter = 0;
         const SETTINGS_UPDATE_INTERVAL = 10; // Update settings every 10 monitoring cycles
@@ -1915,6 +1914,7 @@
                     if (!readings) return; // Skip update if reading failed
                     const { voltage, current, power } = readings;
                     
+                    
                     // Validate readings before using
                     if (voltage === 0 && current === 0 && power === 0) {
                         console.warn('All readings are zero - possible communication issue');
@@ -1930,9 +1930,9 @@
 
                     // Update capacity
                     if (inputEnabled && startTime) {
-                        const capacityIncrement = (current * dt) / 3.6;
-                        totalCapacity += capacityIncrement;
-                        energy += (power * dt) / 3600;
+                        totalCapacity += (current * updateRate / 1000) / 3600;
+                        const elapsed = (Date.now() - startTime) / 1000;
+                        energy += (power * updateRate / 1000) / 3600;
                     }
 
                     // Add to buffers
